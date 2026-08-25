@@ -1,6 +1,7 @@
-import React, { useMemo, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useMindMapStore } from '../../store/useMindMapStore';
 import { calculateTreeLayout } from '../../lib/tree-layout';
+import { generateSmartBezierPath } from '../../lib/bezier';
 import { useCanvasPanZoom } from '../../hooks/useCanvasPanZoom';
 import { useTreeKeyboard } from '../../hooks/useTreeKeyboard';
 import { CanvasBackground } from './CanvasBackground';
@@ -13,7 +14,16 @@ import {
   Maximize2,
   FoldHorizontal,
   UnfoldHorizontal,
+  Sparkles,
 } from 'lucide-react';
+import { ConnectionLine, LayoutNode } from '../../types/mindmap';
+
+interface DragState {
+  nodeId: string;
+  dx: number;
+  dy: number;
+  hoverTargetId: string | null;
+}
 
 export const MindMapCanvas: React.FC = () => {
   const {
@@ -29,12 +39,83 @@ export const MindMapCanvas: React.FC = () => {
     collapseAll,
     expandAll,
     moveNode,
+    moveBranchPosition,
+    resetTreeAutoLayout,
   } = useMindMapStore();
 
-  // Calculate layout coordinates for all nodes and connections
-  const layout = useMemo(() => {
+  const [dragState, setDragState] = useState<DragState | null>(null);
+
+  // Calculate base layout coordinates for all nodes and connections
+  const baseLayout = useMemo(() => {
     return calculateTreeLayout(root, selectedId);
   }, [root, selectedId]);
+
+  // Compute live layout with dynamic node offsets and real-time SVG Bezier connections
+  const dynamicLayout = useMemo(() => {
+    if (!dragState || (dragState.dx === 0 && dragState.dy === 0)) {
+      return baseLayout;
+    }
+
+    const { nodeId, dx, dy } = dragState;
+
+    // Helper to find all descendants of dragged node
+    const movedNodeIds = new Set<string>();
+    function collectDescendants(n: LayoutNode) {
+      movedNodeIds.add(n.id);
+      for (const child of n.children) {
+        collectDescendants(child);
+      }
+    }
+
+    const draggedNode = baseLayout.nodeMap.get(nodeId);
+    if (draggedNode) {
+      collectDescendants(draggedNode);
+    }
+
+    // Clone nodeMap with offset positions for moved nodes
+    const liveNodeMap = new Map<string, LayoutNode>();
+    for (const [id, node] of baseLayout.nodeMap.entries()) {
+      if (movedNodeIds.has(id)) {
+        liveNodeMap.set(id, {
+          ...node,
+          x: node.x + dx,
+          y: node.y + dy,
+        });
+      } else {
+        liveNodeMap.set(id, node);
+      }
+    }
+
+    // Recalculate dynamic SVG connections for all pairs in real time
+    const liveConnections: ConnectionLine[] = [];
+    for (const conn of baseLayout.connections) {
+      const sourceNode = liveNodeMap.get(conn.sourceId);
+      const targetNode = liveNodeMap.get(conn.targetId);
+
+      if (sourceNode && targetNode) {
+        const bezier = generateSmartBezierPath(sourceNode, targetNode);
+        const isActive = selectedId === sourceNode.id || selectedId === targetNode.id;
+
+        liveConnections.push({
+          ...conn,
+          startX: bezier.startX,
+          startY: bezier.startY,
+          endX: bezier.endX,
+          endY: bezier.endY,
+          path: bezier.path,
+          isActive,
+        });
+      } else {
+        liveConnections.push(conn);
+      }
+    }
+
+    return {
+      ...baseLayout,
+      nodeMap: liveNodeMap,
+      connections: liveConnections,
+    };
+  }, [baseLayout, dragState, selectedId]);
 
   // Pan and Zoom Hook
   const {
@@ -57,59 +138,104 @@ export const MindMapCanvas: React.FC = () => {
 
   // Keep bounding box updated in pan/zoom hook for clamping
   useEffect(() => {
-    updateBoundingBox(layout.boundingBox);
-  }, [layout.boundingBox, updateBoundingBox]);
+    updateBoundingBox(dynamicLayout.boundingBox);
+  }, [dynamicLayout.boundingBox, updateBoundingBox]);
 
   // Auto-fit to view on initial mount
   const hasInitializedRef = useRef(false);
   useEffect(() => {
-    if (!hasInitializedRef.current && layout.boundingBox.width > 0) {
+    if (!hasInitializedRef.current && dynamicLayout.boundingBox.width > 0) {
       hasInitializedRef.current = true;
       const timer = setTimeout(() => {
-        fitToBoundingBox(layout.boundingBox);
+        fitToBoundingBox(dynamicLayout.boundingBox);
       }, 60);
       return () => clearTimeout(timer);
     }
-  }, [layout.boundingBox, fitToBoundingBox]);
+  }, [dynamicLayout.boundingBox, fitToBoundingBox]);
 
   // Helper to center on selected node
   const handleCenterSelected = useCallback(
     (nodeId: string) => {
-      const node = layout.nodeMap.get(nodeId);
+      const node = dynamicLayout.nodeMap.get(nodeId);
       if (node) {
         centerOnNode(node.x, node.y, node.width, node.height);
       }
     },
-    [layout, centerOnNode]
+    [dynamicLayout, centerOnNode]
   );
 
   // Keyboard navigation & Shortcuts hook
   useTreeKeyboard({
-    layout,
+    layout: dynamicLayout,
     onCenterSelected: handleCenterSelected,
   });
 
   // Fit to screen handler
   const handleFitToScreen = useCallback(() => {
-    fitToBoundingBox(layout.boundingBox);
-  }, [fitToBoundingBox, layout.boundingBox]);
+    fitToBoundingBox(dynamicLayout.boundingBox);
+  }, [fitToBoundingBox, dynamicLayout.boundingBox]);
 
-  // Drag and Drop node re-parenting
-  const handleDragNodeStart = (e: React.DragEvent, nodeId: string) => {
-    e.dataTransfer.setData('application/json', JSON.stringify({ draggedNodeId: nodeId }));
-    e.dataTransfer.effectAllowed = 'move';
-  };
+  // Node Drag Handlers (1:1 Free Pointer Dragging)
+  const handleNodeDragStart = useCallback((nodeId: string) => {
+    setDragState({
+      nodeId,
+      dx: 0,
+      dy: 0,
+      hoverTargetId: null,
+    });
+  }, []);
 
-  const handleDropOnNode = (e: React.DragEvent, targetNodeId: string) => {
-    try {
-      const data = JSON.parse(e.dataTransfer.getData('application/json'));
-      if (data && data.draggedNodeId) {
-        moveNode(data.draggedNodeId, targetNodeId);
+  const handleNodeDragMove = useCallback(
+    (nodeId: string, dx: number, dy: number, clientX: number, clientY: number) => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+
+      // Convert screen clientX, clientY to canvas space
+      const canvasPointerX = (clientX - rect.left - transform.x) / transform.scale;
+      const canvasPointerY = (clientY - rect.top - transform.y) / transform.scale;
+
+      // Detect if cursor is hovering over any other node (drop target for reparenting)
+      let foundTargetId: string | null = null;
+      for (const [id, node] of baseLayout.nodeMap.entries()) {
+        if (id === nodeId) continue;
+
+        // Check if pointer is within target node bounding box (with slight padding)
+        if (
+          canvasPointerX >= node.x - 8 &&
+          canvasPointerX <= node.x + node.width + 8 &&
+          canvasPointerY >= node.y - 8 &&
+          canvasPointerY <= node.y + node.height + 8
+        ) {
+          foundTargetId = id;
+          break;
+        }
       }
-    } catch {
-      // ignore drop errors
-    }
-  };
+
+      setDragState({
+        nodeId,
+        dx,
+        dy,
+        hoverTargetId: foundTargetId,
+      });
+    },
+    [baseLayout.nodeMap, containerRef, transform]
+  );
+
+  const handleNodeDragEnd = useCallback(
+    (nodeId: string, dx: number, dy: number) => {
+      if (dragState) {
+        // If dropped onto another node -> reparent branch to target node
+        if (dragState.hoverTargetId && dragState.hoverTargetId !== nodeId) {
+          moveNode(nodeId, dragState.hoverTargetId);
+        } else if (Math.hypot(dx, dy) > 4) {
+          // If released in free space -> permanently save new branch position
+          moveBranchPosition(nodeId, dx, dy);
+        }
+      }
+      setDragState(null);
+    },
+    [dragState, moveNode, moveBranchPosition]
+  );
 
   return (
     <div
@@ -135,27 +261,37 @@ export const MindMapCanvas: React.FC = () => {
       >
         {/* SVG Connections Layer */}
         <TreeConnections
-          connections={layout.connections}
+          connections={dynamicLayout.connections}
           selectedId={selectedId}
         />
 
         {/* DOM Nodes Layer */}
-        {Array.from(layout.nodeMap.values()).map((node) => (
-          <NodeComponent
-            key={node.id}
-            node={node}
-            isSelected={selectedId === node.id}
-            isEditing={editingId === node.id}
-            onSelect={selectNode}
-            onStartEdit={startEditing}
-            onStopEdit={stopEditing}
-            onAddChild={addChildNode}
-            onDelete={deleteNode}
-            onToggleCollapse={toggleCollapse}
-            onDragNodeStart={handleDragNodeStart}
-            onDropOnNode={handleDropOnNode}
-          />
-        ))}
+        {Array.from(dynamicLayout.nodeMap.values()).map((node) => {
+          const isThisDragging = dragState?.nodeId === node.id;
+          const isTarget = dragState?.hoverTargetId === node.id;
+
+          return (
+            <NodeComponent
+              key={node.id}
+              node={node}
+              isSelected={selectedId === node.id}
+              isEditing={editingId === node.id}
+              isDraggingThisNode={isThisDragging}
+              isHoverTarget={isTarget}
+              dragOffset={isThisDragging ? { dx: dragState.dx, dy: dragState.dy } : undefined}
+              canvasScale={transform.scale}
+              onSelect={selectNode}
+              onStartEdit={startEditing}
+              onStopEdit={stopEditing}
+              onAddChild={addChildNode}
+              onDelete={deleteNode}
+              onToggleCollapse={toggleCollapse}
+              onNodeDragStart={handleNodeDragStart}
+              onNodeDragMove={handleNodeDragMove}
+              onNodeDragEnd={handleNodeDragEnd}
+            />
+          );
+        })}
       </div>
 
       {/* Floating Bottom-Left Canvas Controls Bar */}
@@ -164,7 +300,7 @@ export const MindMapCanvas: React.FC = () => {
         <button
           onClick={zoomIn}
           title="Приблизить (Колесо мыши вверх)"
-          className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
+          className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-850 rounded-lg transition-all active:scale-[0.95] cursor-pointer"
         >
           <ZoomIn className="w-4 h-4" />
         </button>
@@ -173,7 +309,7 @@ export const MindMapCanvas: React.FC = () => {
         <button
           onClick={resetZoom}
           title="Сбросить масштаб (100%)"
-          className="px-2 py-1 text-xs font-mono font-medium text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors min-w-[52px] text-center cursor-pointer"
+          className="px-2 py-1 text-xs font-mono font-medium text-zinc-300 hover:text-white hover:bg-zinc-850 rounded-lg transition-all active:scale-[0.95] min-w-[52px] text-center cursor-pointer"
         >
           {Math.round(transform.scale * 100)}%
         </button>
@@ -182,7 +318,7 @@ export const MindMapCanvas: React.FC = () => {
         <button
           onClick={zoomOut}
           title="Отдалить (Колесо мыши вниз)"
-          className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
+          className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-850 rounded-lg transition-all active:scale-[0.95] cursor-pointer"
         >
           <ZoomOut className="w-4 h-4" />
         </button>
@@ -193,16 +329,28 @@ export const MindMapCanvas: React.FC = () => {
         <button
           onClick={handleFitToScreen}
           title="Вписать всю карту в экран"
-          className="p-2 text-zinc-400 hover:text-emerald-400 hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
+          className="p-2 text-zinc-400 hover:text-emerald-400 hover:bg-zinc-850 rounded-lg transition-all active:scale-[0.95] cursor-pointer"
         >
           <Maximize2 className="w-4 h-4" />
         </button>
+
+        {/* Auto-Layout Snap (Выровнять схему) */}
+        <button
+          onClick={resetTreeAutoLayout}
+          title="Автоматически выровнять все блоки и ветки в аккуратное дерево"
+          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-emerald-400 hover:text-emerald-300 bg-emerald-950/40 hover:bg-emerald-950/80 border border-emerald-800/60 rounded-lg transition-all active:scale-[0.95] cursor-pointer"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Выровнять</span>
+        </button>
+
+        <div className="w-[1px] h-5 bg-zinc-800 mx-0.5" />
 
         {/* Collapse All */}
         <button
           onClick={collapseAll}
           title="Свернуть все ветки"
-          className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
+          className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-850 rounded-lg transition-all active:scale-[0.95] cursor-pointer"
         >
           <FoldHorizontal className="w-4 h-4" />
         </button>
@@ -211,7 +359,7 @@ export const MindMapCanvas: React.FC = () => {
         <button
           onClick={expandAll}
           title="Развернуть все ветки"
-          className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
+          className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-850 rounded-lg transition-all active:scale-[0.95] cursor-pointer"
         >
           <UnfoldHorizontal className="w-4 h-4" />
         </button>
@@ -219,7 +367,7 @@ export const MindMapCanvas: React.FC = () => {
 
       {/* Minimap Component */}
       <Minimap
-        layout={layout}
+        layout={dynamicLayout}
         transform={transform}
         onNavigate={(newX, newY) => {
           setTransform((prev) => ({ ...prev, x: newX, y: newY }));

@@ -7,7 +7,7 @@ import {
   CalculatedLayout,
   NodeId,
 } from '../types/mindmap';
-import { generateBezierPath, getBranchColor } from './bezier';
+import { generateSmartBezierPath, getBranchColor } from './bezier';
 
 export const HORIZONTAL_GAP = 76; // Horizontal distance between levels
 export const VERTICAL_GAP = 20;   // Vertical distance between sibling subtrees
@@ -85,8 +85,8 @@ function computeSubtreeHeights(
     return {
       id: node.id,
       title: node.title,
-      x: 0,
-      y: 0,
+      x: node.customX ?? 0,
+      y: node.customY ?? 0,
       width,
       height,
       depth,
@@ -108,6 +108,8 @@ function computeSubtreeHeights(
       strengthScore: node.strengthScore,
       opponentStance: node.opponentStance,
       citation: node.citation,
+      customX: node.customX,
+      customY: node.customY,
       children: [],
       parentId,
       isRoot,
@@ -130,8 +132,8 @@ function computeSubtreeHeights(
   return {
     id: node.id,
     title: node.title,
-    x: 0,
-    y: 0,
+    x: node.customX ?? 0,
+    y: node.customY ?? 0,
     width,
     height,
     depth,
@@ -153,6 +155,8 @@ function computeSubtreeHeights(
     strengthScore: node.strengthScore,
     opponentStance: node.opponentStance,
     citation: node.citation,
+    customX: node.customX,
+    customY: node.customY,
     children,
     parentId,
     isRoot,
@@ -161,7 +165,7 @@ function computeSubtreeHeights(
 }
 
 /**
- * Second pass (Top-Down): Assigns exact (x, y) coordinates.
+ * Second pass (Top-Down): Assigns exact (x, y) coordinates with support for custom manual positioning.
  */
 function assignCoordinates(
   node: IntermediateLayoutNode,
@@ -171,8 +175,14 @@ function assignCoordinates(
   connections: ConnectionLine[],
   selectedId: NodeId | null
 ) {
-  node.x = currentX;
-  node.y = currentY;
+  // If node has free-form custom coordinates, respect them directly
+  if (node.customX !== undefined && node.customY !== undefined) {
+    node.x = node.customX;
+    node.y = node.customY;
+  } else {
+    node.x = currentX;
+    node.y = currentY;
+  }
 
   // Add to lookup map
   nodeMap.set(node.id, node);
@@ -186,38 +196,13 @@ function assignCoordinates(
     node.children.reduce((sum, child) => sum + (child as IntermediateLayoutNode).subtreeHeight, 0) +
     (node.children.length - 1) * VERTICAL_GAP;
 
-  let childYCursor = currentY + node.height / 2 - childrenTotalHeight / 2;
-  const childX = currentX + node.width + HORIZONTAL_GAP;
+  let childYCursor = node.y + node.height / 2 - childrenTotalHeight / 2;
+  const childX = node.x + node.width + HORIZONTAL_GAP;
 
   for (const child of node.children as IntermediateLayoutNode[]) {
     const childNodeY = childYCursor + child.subtreeHeight / 2 - child.height / 2;
 
-    // Source anchor: middle-right of parent node
-    const startX = currentX + node.width;
-    const startY = currentY + node.height / 2;
-
-    // Target anchor: middle-left of child node
-    const endX = childX;
-    const endY = childNodeY + child.height / 2;
-
-    // Generate Bezier path
-    const path = generateBezierPath(startX, startY, endX, endY);
-
-    const isConnectionActive = selectedId === node.id || selectedId === child.id;
-
-    connections.push({
-      id: `conn-${node.id}-${child.id}`,
-      sourceId: node.id,
-      targetId: child.id,
-      startX,
-      startY,
-      endX,
-      endY,
-      path,
-      color: child.color,
-      isActive: isConnectionActive,
-    });
-
+    // Recurse first so child has its final x, y
     assignCoordinates(
       child,
       childX,
@@ -226,6 +211,24 @@ function assignCoordinates(
       connections,
       selectedId
     );
+
+    // Smart Bezier path calculation between parent and child bounding boxes
+    const bezierResult = generateSmartBezierPath(node, child);
+
+    const isConnectionActive = selectedId === node.id || selectedId === child.id;
+
+    connections.push({
+      id: `conn-${node.id}-${child.id}`,
+      sourceId: node.id,
+      targetId: child.id,
+      startX: bezierResult.startX,
+      startY: bezierResult.startY,
+      endX: bezierResult.endX,
+      endY: bezierResult.endY,
+      path: bezierResult.path,
+      color: child.color,
+      isActive: isConnectionActive,
+    });
 
     childYCursor += child.subtreeHeight + VERTICAL_GAP;
   }
@@ -243,11 +246,14 @@ export function calculateTreeLayout(
   const nodeMap = new Map<NodeId, LayoutNode>();
   const connections: ConnectionLine[] = [];
 
+  const rootInitialX = root.customX ?? 0;
+  const rootInitialY = root.customY ?? -intermediateRoot.height / 2;
+
   // Center root node vertically at 0
   assignCoordinates(
     intermediateRoot,
-    0,
-    -intermediateRoot.height / 2,
+    rootInitialX,
+    rootInitialY,
     nodeMap,
     connections,
     selectedId
@@ -317,6 +323,18 @@ export function calculateTreeLayout(
     connections,
     boundingBox,
     stats,
+  };
+}
+
+/**
+ * Strips manual coordinates from all nodes to snap tree back into automatic clean layout.
+ */
+export function resetTreeLayoutCoordinates(node: MindNode): MindNode {
+  return {
+    ...node,
+    customX: undefined,
+    customY: undefined,
+    children: node.children ? node.children.map(resetTreeLayoutCoordinates) : undefined,
   };
 }
 

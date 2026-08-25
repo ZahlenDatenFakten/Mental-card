@@ -27,6 +27,7 @@ export default {
           'Inter',
           '-apple-system',
           'BlinkMacSystemFont',
+          '"SF Pro Text"',
           '"Segoe UI"',
           'Roboto',
           'sans-serif',
@@ -42,11 +43,15 @@ export default {
       boxShadow: {
         'node': '0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)',
         'node-active': '0 0 0 2px #10b981, 0 8px 30px -4px rgba(16, 185, 129, 0.3)',
-        'floating': '0 12px 36px -4px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08)',
+        'floating': '0 16px 40px -4px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.09)',
+      },
+      transitionTimingFunction: {
+        'apple-out': 'cubic-bezier(0.23, 1, 0.32, 1)',
+        'apple-spring': 'cubic-bezier(0.32, 0.72, 0, 1)',
       },
       animation: {
-        'fade-in': 'fadeIn 150ms ease-out forwards',
-        'scale-in': 'scaleIn 150ms ease-out forwards',
+        'fade-in': 'fadeIn 160ms cubic-bezier(0.23, 1, 0.32, 1) forwards',
+        'scale-in': 'scaleIn 180ms cubic-bezier(0.23, 1, 0.32, 1) forwards',
       },
       keyframes: {
         fadeIn: {

@@ -17,6 +17,7 @@ import {
   AlertTriangle,
   Gavel,
   Star,
+  GripHorizontal,
 } from 'lucide-react';
 import { LayoutNode, LegalNodeType } from '../../types/mindmap';
 import { useMindMapStore } from '../../store/useMindMapStore';
@@ -25,33 +26,46 @@ interface NodeComponentProps {
   node: LayoutNode;
   isSelected: boolean;
   isEditing: boolean;
+  isDraggingThisNode?: boolean;
+  isHoverTarget?: boolean;
+  dragOffset?: { dx: number; dy: number };
+  canvasScale?: number;
   onSelect: (id: string) => void;
   onStartEdit: (id: string) => void;
   onStopEdit: () => void;
   onAddChild: (parentId: string) => void;
   onDelete: (id: string) => void;
   onToggleCollapse: (id: string) => void;
-  onDragNodeStart?: (e: React.DragEvent, nodeId: string) => void;
-  onDropOnNode?: (e: React.DragEvent, targetNodeId: string) => void;
+  onNodeDragStart?: (nodeId: string, clientX: number, clientY: number) => void;
+  onNodeDragMove?: (nodeId: string, dx: number, dy: number, clientX: number, clientY: number) => void;
+  onNodeDragEnd?: (nodeId: string, dx: number, dy: number, clientX: number, clientY: number) => void;
 }
 
 export const NodeComponent: React.FC<NodeComponentProps> = ({
   node,
   isSelected,
   isEditing,
+  isDraggingThisNode = false,
+  isHoverTarget = false,
+  dragOffset = { dx: 0, dy: 0 },
+  canvasScale = 1,
   onSelect,
   onStartEdit,
   onStopEdit,
   onAddChild,
   onDelete,
   onToggleCollapse,
-  onDragNodeStart,
-  onDropOnNode,
+  onNodeDragStart,
+  onNodeDragMove,
+  onNodeDragEnd,
 }) => {
   const [editText, setEditText] = useState(node.title);
-  const [isDragOver, setIsDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { updateNode, duplicateNode, setSidebarOpen, filterNodeType, openConfirmDialog } = useMindMapStore();
+
+  const isPointerDownRef = useRef(false);
+  const isDraggingRef = useRef(false);
+  const pointerStartRef = useRef<{ clientX: number; clientY: number }>({ clientX: 0, clientY: 0 });
 
   useEffect(() => {
     setEditText(node.title);
@@ -96,6 +110,77 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
         onDelete(node.id);
       },
     });
+  };
+
+  // Pointer event handlers for Apple-style 1:1 direct manipulation
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Ignore right click
+    if (e.button !== 0) return;
+
+    // Don't drag if clicking buttons, inputs, links, or if editing
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('button, input, textarea, a, select') ||
+      isEditing
+    ) {
+      return;
+    }
+
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+
+    isPointerDownRef.current = true;
+    isDraggingRef.current = false;
+    pointerStartRef.current = { clientX: e.clientX, clientY: e.clientY };
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isPointerDownRef.current) return;
+
+    const deltaScreenX = e.clientX - pointerStartRef.current.clientX;
+    const deltaScreenY = e.clientY - pointerStartRef.current.clientY;
+    const dist = Math.hypot(deltaScreenX, deltaScreenY);
+
+    const scale = canvasScale || 1;
+    const dx = deltaScreenX / scale;
+    const dy = deltaScreenY / scale;
+
+    if (!isDraggingRef.current && dist > 4) {
+      isDraggingRef.current = true;
+      onNodeDragStart?.(node.id, e.clientX, e.clientY);
+    }
+
+    if (isDraggingRef.current) {
+      e.stopPropagation();
+      onNodeDragMove?.(node.id, dx, dy, e.clientX, e.clientY);
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isPointerDownRef.current) return;
+
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+
+    const deltaScreenX = e.clientX - pointerStartRef.current.clientX;
+    const deltaScreenY = e.clientY - pointerStartRef.current.clientY;
+    const scale = canvasScale || 1;
+    const dx = deltaScreenX / scale;
+    const dy = deltaScreenY / scale;
+
+    if (isDraggingRef.current) {
+      e.stopPropagation();
+      onNodeDragEnd?.(node.id, dx, dy, e.clientX, e.clientY);
+    } else {
+      // Just a simple click selection
+      onSelect(node.id);
+    }
+
+    isPointerDownRef.current = false;
+    isDraggingRef.current = false;
   };
 
   const hasChildren = node.children.length > 0 || node.collapsedCount > 0;
@@ -165,62 +250,64 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
     node.nodeType !== filterNodeType &&
     !isRoot;
 
+  // Calculate live position including active drag offset
+  const currentX = node.x + (isDraggingThisNode ? dragOffset.dx : 0);
+  const currentY = node.y + (isDraggingThisNode ? dragOffset.dy : 0);
+
   return (
     <div
       id={`node-${node.id}`}
-      draggable={!isEditing && !isRoot}
-      onDragStart={(e) => onDragNodeStart?.(e, node.id)}
-      onDragOver={(e) => {
-        if (!isRoot) {
-          e.preventDefault();
-          setIsDragOver(true);
-        }
-      }}
-      onDragLeave={() => setIsDragOver(false)}
-      onDrop={(e) => {
-        e.preventDefault();
-        setIsDragOver(false);
-        onDropOnNode?.(e, node.id);
-      }}
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelect(node.id);
-      }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
       onDoubleClick={(e) => {
         e.stopPropagation();
         onStartEdit(node.id);
       }}
-      className={`group absolute select-none flex items-center transition-all duration-150 rounded-lg cursor-pointer ${
+      className={`group absolute select-none flex items-center transition-all duration-100 rounded-xl cursor-grab active:cursor-grabbing ${
         isRoot
           ? 'bg-zinc-900/95 border-2 shadow-lg z-20 border-zinc-700'
           : 'bg-zinc-900/90 hover:bg-zinc-850 border shadow-md z-10'
       } ${
-        isSelected
+        isDraggingThisNode
+          ? 'ring-2 ring-emerald-400 border-emerald-400 scale-[1.03] shadow-[0_20px_40px_rgba(0,0,0,0.7)] z-50 opacity-95 pointer-events-none'
+          : isHoverTarget
+          ? 'ring-2 ring-indigo-400 border-indigo-400 bg-indigo-950/80 scale-[1.03] shadow-lg z-40'
+          : isSelected
           ? 'ring-2 ring-emerald-500/90 border-emerald-500/80 shadow-[0_0_22px_rgba(16,185,129,0.3)] z-30'
-          : isDragOver
-          ? 'ring-2 ring-indigo-500 border-indigo-500 bg-indigo-950/40 z-30'
           : 'border-zinc-800/90 hover:border-zinc-700'
       } ${isFilteredOut ? 'opacity-35 scale-[0.98]' : 'opacity-100'}`}
       style={{
-        transform: `translate(${node.x}px, ${node.y}px)`,
+        transform: `translate3d(${currentX}px, ${currentY}px, 0)`,
         height: `${node.height}px`,
+        touchAction: 'none',
       }}
     >
       {/* Branch color vertical indicator */}
       {node.color && (
         <div
-          className="w-1 self-stretch rounded-l-[7px] flex-shrink-0"
+          className="w-1.5 self-stretch rounded-l-[10px] flex-shrink-0"
           style={{ backgroundColor: node.color }}
         />
       )}
 
       {/* Main node container */}
       <div className="flex items-center gap-2 px-3 py-1 text-sm overflow-hidden whitespace-nowrap">
+        {/* Subtle Grip Drag Handle on hover */}
+        {!isRoot && (
+          <div
+            title="Свободно переместить блок или ветку"
+            className="text-zinc-600 group-hover:text-zinc-400 transition-colors -ml-1 cursor-grab"
+          >
+            <GripHorizontal className="w-3 h-3" />
+          </div>
+        )}
+
         {/* Legal Type Icon Emblem */}
         {typeBadge && (
           <div
             title={`Тип: ${typeBadge.label}`}
-            className="flex items-center justify-center p-1 rounded bg-zinc-850 border border-zinc-750 flex-shrink-0"
+            className="flex items-center justify-center p-1 rounded-lg bg-zinc-850 border border-zinc-750 flex-shrink-0"
           >
             {typeBadge.icon}
           </div>
@@ -235,12 +322,12 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
             onChange={(e) => setEditText(e.target.value)}
             onBlur={handleFinishEdit}
             onKeyDown={handleKeyDown}
-            className="bg-zinc-950/90 text-zinc-100 px-1.5 py-0.5 rounded outline-none border border-emerald-500/80 font-medium text-sm min-w-[100px]"
+            className="bg-zinc-950/90 text-zinc-100 px-1.5 py-0.5 rounded-lg outline-none border border-emerald-500/80 font-medium text-sm min-w-[100px]"
             style={{ width: `${Math.max(100, editText.length * 9)}px` }}
           />
         ) : (
           <span
-            className={`font-medium tracking-tight ${
+            className={`tracking-tight ${
               isRoot
                 ? 'text-zinc-50 font-semibold text-[15px]'
                 : node.depth === 1
@@ -348,7 +435,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
             onToggleCollapse(node.id);
           }}
           title={node.isCollapsed ? `Развернуть (${node.collapsedCount} узлов)` : 'Свернуть ветку'}
-          className={`flex items-center justify-center h-5 px-1.5 mr-1.5 rounded text-[11px] font-mono transition-colors ${
+          className={`flex items-center justify-center h-5 px-1.5 mr-1.5 rounded-md text-[11px] font-mono transition-colors ${
             node.isCollapsed
               ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-700/80 hover:bg-emerald-900'
               : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
@@ -368,7 +455,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
       {/* Quick Action Floating Controls */}
       <div
         className={`absolute left-full ml-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto ${
-          isSelected ? 'opacity-100 pointer-events-auto' : ''
+          isSelected && !isDraggingThisNode ? 'opacity-100 pointer-events-auto' : ''
         }`}
       >
         {/* Quick Add Child Node */}
@@ -378,7 +465,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
             onAddChild(node.id);
           }}
           title="Добавить дочерний элемент (Tab)"
-          className="flex items-center justify-center w-6 h-6 bg-zinc-800/90 hover:bg-emerald-600 text-zinc-300 hover:text-white rounded-md border border-zinc-700 shadow-md transition-colors cursor-pointer"
+          className="flex items-center justify-center w-6 h-6 bg-zinc-800/90 hover:bg-emerald-600 text-zinc-300 hover:text-white rounded-lg border border-zinc-700 shadow-md transition-all active:scale-[0.95] cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" />
         </button>
@@ -390,9 +477,9 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
             onStartEdit(node.id);
           }}
           title="Редактировать текст (F2)"
-          className="flex items-center justify-center w-6 h-6 bg-zinc-800/90 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-md border border-zinc-700 shadow-md transition-colors cursor-pointer"
+          className="flex items-center justify-center w-6 h-6 bg-zinc-800/90 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg border border-zinc-700 shadow-md transition-all active:scale-[0.95] cursor-pointer"
         >
-          <Edit3 className="w-3 h-3" />
+          <Edit3 className="w-3.5 h-3.5" />
         </button>
 
         {/* Duplicate Branch */}
@@ -403,9 +490,9 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
               duplicateNode(node.id);
             }}
             title="Дублировать ветку"
-            className="flex items-center justify-center w-6 h-6 bg-zinc-800/90 hover:bg-violet-600 text-zinc-300 hover:text-white rounded-md border border-zinc-700 shadow-md transition-colors cursor-pointer"
+            className="flex items-center justify-center w-6 h-6 bg-zinc-800/90 hover:bg-violet-600 text-zinc-300 hover:text-white rounded-lg border border-zinc-700 shadow-md transition-all active:scale-[0.95] cursor-pointer"
           >
-            <Copy className="w-3 h-3" />
+            <Copy className="w-3.5 h-3.5" />
           </button>
         )}
 
@@ -414,9 +501,9 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
           <button
             onClick={handleDeleteWithConfirm}
             title="Удалить узел со всем поддеревом (Del)"
-            className="flex items-center justify-center w-6 h-6 bg-zinc-800/90 hover:bg-rose-600 text-zinc-400 hover:text-white rounded-md border border-zinc-700 shadow-md transition-colors cursor-pointer"
+            className="flex items-center justify-center w-6 h-6 bg-zinc-800/90 hover:bg-rose-600 text-zinc-400 hover:text-white rounded-lg border border-zinc-700 shadow-md transition-all active:scale-[0.95] cursor-pointer"
           >
-            <Trash2 className="w-3 h-3" />
+            <Trash2 className="w-3.5 h-3.5" />
           </button>
         )}
       </div>

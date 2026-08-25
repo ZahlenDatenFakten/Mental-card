@@ -12,6 +12,7 @@ import {
 import { INITIAL_CASES, INITIAL_MIND_MAP, CASE_TEMPLATES } from '../lib/sample-data';
 import { loadSharedCaseFromUrl } from '../lib/share-utils';
 import { parseMarkdownToTree } from '../lib/markdown-parser';
+import { resetTreeLayoutCoordinates, calculateTreeLayout } from '../lib/tree-layout';
 
 const STORAGE_CASES_KEY = 'legal_mindmap_cases_v3';
 const STORAGE_ACTIVE_KEY = 'legal_mindmap_active_case_id_v3';
@@ -72,6 +73,9 @@ interface MindMapState {
   startEditing: (id: NodeId) => void;
   stopEditing: () => void;
   updateNode: (id: NodeId, updates: Partial<MindNode>) => void;
+  setNodePosition: (id: NodeId, x: number, y: number) => void;
+  moveBranchPosition: (id: NodeId, deltaX: number, deltaY: number) => void;
+  resetTreeAutoLayout: () => void;
   addChildNode: (parentId: NodeId, title?: string, nodeType?: LegalNodeType) => void;
   addSiblingNode: (siblingId: NodeId, title?: string, nodeType?: LegalNodeType) => void;
   deleteNode: (id: NodeId) => void;
@@ -468,7 +472,6 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
     }
 
     const clonedRoot = cloneTree(found.root);
-    // Add instance specific branch
     const instanceBranch: MindNode = {
       id: uid(),
       title: instanceBranchTitle,
@@ -526,6 +529,54 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
   updateNode: (id, updates) => {
     const newRoot = updateInTree(get().root, id, updates);
     (get() as any)._pushHistory(newRoot);
+  },
+
+  setNodePosition: (id, x, y) => {
+    const newRoot = updateInTree(get().root, id, {
+      customX: Math.round(x),
+      customY: Math.round(y),
+    });
+    (get() as any)._pushHistory(newRoot);
+  },
+
+  moveBranchPosition: (id, deltaX, deltaY) => {
+    const currentLayout = calculateTreeLayout(get().root);
+
+    function shiftNodeAndSubtree(node: MindNode): MindNode {
+      const layoutPos = currentLayout.nodeMap.get(node.id);
+      const curX = node.customX ?? layoutPos?.x ?? 0;
+      const curY = node.customY ?? layoutPos?.y ?? 0;
+      return {
+        ...node,
+        customX: Math.round(curX + deltaX),
+        customY: Math.round(curY + deltaY),
+        children: node.children ? node.children.map(shiftNodeAndSubtree) : undefined,
+      };
+    }
+
+    function applyBranchShift(node: MindNode): MindNode {
+      if (node.id === id) {
+        return shiftNodeAndSubtree(node);
+      }
+      if (!node.children) return node;
+      return {
+        ...node,
+        children: node.children.map(applyBranchShift),
+      };
+    }
+
+    const newRoot = applyBranchShift(get().root);
+    (get() as any)._pushHistory(newRoot);
+  },
+
+  resetTreeAutoLayout: () => {
+    const newRoot = resetTreeLayoutCoordinates(get().root);
+    (get() as any)._pushHistory(newRoot);
+    get().addToast({
+      type: 'info',
+      title: 'Схема выровнена',
+      message: 'Все блоки автоматически структурированы в дерево.',
+    });
   },
 
   addChildNode: (parentId, title = 'Новый блок', nodeType = 'general') => {
@@ -593,12 +644,13 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
     const node = findNode(get().root, id);
     if (!node || id === get().root.id) return;
 
-    // Helper to clone subtree with new IDs
     function cloneWithNewIds(n: MindNode): MindNode {
       return {
         ...n,
         id: uid(),
         title: n.id === id ? `${n.title} (Копия)` : n.title,
+        customX: n.customX !== undefined ? n.customX + 40 : undefined,
+        customY: n.customY !== undefined ? n.customY + 40 : undefined,
         children: n.children ? n.children.map(cloneWithNewIds) : undefined,
       };
     }

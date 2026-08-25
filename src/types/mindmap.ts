@@ -41,6 +41,8 @@ export interface LegalMetadata {
   strengthScore?: number;    // 1-5
   opponentStance?: string;   // Позиция оппонента
   citation?: string;         // Цитата из нормы права / судебного акта
+  customX?: number;          // Свободное позиционирование X
+  customY?: number;          // Свободное позиционирование Y
 }
 
 export interface MindNode extends LegalMetadata {
