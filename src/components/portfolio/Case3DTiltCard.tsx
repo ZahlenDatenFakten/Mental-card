@@ -129,15 +129,15 @@ export const Case3DTiltCard: React.FC<Case3DTiltCardProps> = ({
         transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(${rotateX !== 0 ? 6 : 0}px)`,
         transition: rotateX === 0 ? 'transform 350ms cubic-bezier(0.25, 1, 0.5, 1)' : 'none',
       }}
-      className={`relative p-6 rounded-3xl border select-none transition-all duration-150 flex flex-col justify-between group cursor-pointer overflow-hidden ${
+      className={`relative p-7 rounded-3xl border select-none transition-all duration-150 flex flex-col justify-between group cursor-pointer overflow-hidden ${
         isActive
-          ? 'bg-[#18181b] border-[#0A84FF] ring-2 ring-[#0A84FF]/40 shadow-[0_16px_40px_rgba(10,132,255,0.22)]'
+          ? 'bg-[#18181b] border-[#0A84FF] ring-2 ring-[#0A84FF]/40 shadow-[0_18px_48px_rgba(10,132,255,0.22)]'
           : 'bg-[#141417] hover:bg-[#1a1a1e] border-zinc-800/90 hover:border-zinc-700 shadow-xl'
       }`}
     >
       {/* Subtle Ambient Aura */}
       <div
-        className="absolute -top-16 -right-16 w-40 h-40 rounded-full pointer-events-none blur-3xl opacity-30 group-hover:opacity-60 transition-opacity"
+        className="absolute -top-16 -right-16 w-44 h-44 rounded-full pointer-events-none blur-3xl opacity-30 group-hover:opacity-60 transition-opacity"
         style={{ backgroundColor: badge.glow }}
       />
 
@@ -150,11 +150,11 @@ export const Case3DTiltCard: React.FC<Case3DTiltCardProps> = ({
       />
 
       {/* Card Content */}
-      <div className="relative z-10 space-y-4">
+      <div className="relative z-10 space-y-4.5">
         {/* Top Row: Instance Badge & Status */}
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2.5">
           <span
-            className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-xl border ${badge.style}`}
+            className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-1.5 rounded-xl border ${badge.style}`}
           >
             {badge.icon}
             <span>{badge.label}</span>
@@ -163,7 +163,7 @@ export const Case3DTiltCard: React.FC<Case3DTiltCardProps> = ({
           <div className="flex items-center gap-2">
             {getStatusBadge(caseItem.status)}
             {isActive && (
-              <span className="flex items-center gap-1 text-[11px] font-mono text-[#30D158] bg-[#30D158]/15 px-2.5 py-0.5 rounded-lg border border-[#30D158]/30">
+              <span className="flex items-center gap-1 text-[11px] font-mono text-[#30D158] bg-[#30D158]/15 px-2.5 py-1 rounded-lg border border-[#30D158]/30">
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 Текущее
               </span>
@@ -172,25 +172,25 @@ export const Case3DTiltCard: React.FC<Case3DTiltCardProps> = ({
         </div>
 
         {/* Title and Case Number */}
-        <div>
+        <div className="space-y-1">
           <h3 className="text-base font-bold text-white group-hover:text-[#0A84FF] transition-colors leading-snug tracking-tight">
             {caseItem.title}
           </h3>
           {caseItem.caseNumber && (
-            <span className="text-xs font-mono text-[#8E8E93] block mt-0.5">
+            <span className="text-xs font-mono text-[#8E8E93] block">
               Шифр дела: № {caseItem.caseNumber}
             </span>
           )}
         </div>
 
         {/* Court and Judge */}
-        <div className="text-xs text-[#8E8E93] space-y-0.5 font-sans">
+        <div className="text-xs text-[#8E8E93] space-y-1 font-sans">
           <div className="text-[#EBEBF5] font-medium">{caseItem.courtName}</div>
-          {caseItem.judge && <div className="text-[#8E8E93] text-[11px]">{caseItem.judge}</div>}
+          {caseItem.judge && <div className="text-[#8E8E93] text-[11.5px]">{caseItem.judge}</div>}
         </div>
 
         {/* Mini Mind-Map Visual Graph Node Preview */}
-        <div className="p-3 bg-black/40 border border-zinc-800/80 rounded-2xl space-y-2">
+        <div className="p-3.5 bg-black/40 border border-zinc-800/80 rounded-2xl space-y-2.5">
           <div className="flex items-center justify-between text-[11px] text-[#8E8E93]">
             <span className="flex items-center gap-1.5 font-medium text-[#EBEBF5]">
               <Layers className="w-3.5 h-3.5 text-[#0A84FF]" />
@@ -203,32 +203,32 @@ export const Case3DTiltCard: React.FC<Case3DTiltCardProps> = ({
             {previewBranches.map((child, idx) => (
               <span
                 key={idx}
-                className="inline-flex items-center gap-1 text-[10.5px] px-2 py-0.5 rounded-md bg-white/[0.04] border border-zinc-800 text-[#EBEBF5] truncate max-w-[150px]"
+                className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-lg bg-white/[0.04] border border-zinc-800 text-[#EBEBF5] truncate max-w-[160px]"
               >
                 <span
-                  className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  className="w-2 h-2 rounded-full flex-shrink-0"
                   style={{ backgroundColor: child.color || '#0A84FF' }}
                 />
                 <span className="truncate">{child.title}</span>
               </span>
             ))}
             {totalNodes > 4 && (
-              <span className="text-[10px] text-[#8E8E93] font-mono">+{totalNodes - 4} узлов</span>
+              <span className="text-[10.5px] text-[#8E8E93] font-mono">+{totalNodes - 4} узлов</span>
             )}
           </div>
         </div>
       </div>
 
       {/* Bottom Actions Bar */}
-      <div className="relative z-10 mt-5 pt-4 border-t border-zinc-800/80 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+      <div className="relative z-10 mt-6 pt-4.5 border-t border-zinc-800/80 flex items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2.5">
           {/* Primary Enter Button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
               onOpen(caseItem.id);
             }}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold apple-btn-primary rounded-xl transition-all active:scale-[0.95] cursor-pointer shadow-sm"
+            className="flex items-center gap-1.5 px-4.5 py-2.5 text-xs font-semibold apple-btn-primary rounded-xl transition-all active:scale-[0.95] cursor-pointer shadow-sm"
           >
             <span>Открыть карту</span>
             <ArrowRight className="w-3.5 h-3.5" />
