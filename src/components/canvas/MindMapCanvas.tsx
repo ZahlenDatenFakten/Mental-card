@@ -13,7 +13,6 @@ import {
   Maximize2,
   FoldHorizontal,
   UnfoldHorizontal,
-  Compass,
 } from 'lucide-react';
 
 export const MindMapCanvas: React.FC = () => {
@@ -53,17 +52,22 @@ export const MindMapCanvas: React.FC = () => {
     resetZoom,
     fitToBoundingBox,
     centerOnNode,
+    updateBoundingBox,
   } = useCanvasPanZoom();
+
+  // Keep bounding box updated in pan/zoom hook for clamping
+  useEffect(() => {
+    updateBoundingBox(layout.boundingBox);
+  }, [layout.boundingBox, updateBoundingBox]);
 
   // Auto-fit to view on initial mount
   const hasInitializedRef = useRef(false);
   useEffect(() => {
     if (!hasInitializedRef.current && layout.boundingBox.width > 0) {
       hasInitializedRef.current = true;
-      // Slight delay to ensure container dimensions are ready
       const timer = setTimeout(() => {
         fitToBoundingBox(layout.boundingBox);
-      }, 50);
+      }, 60);
       return () => clearTimeout(timer);
     }
   }, [layout.boundingBox, fitToBoundingBox]);
@@ -106,29 +110,6 @@ export const MindMapCanvas: React.FC = () => {
       // ignore drop errors
     }
   };
-
-  // Check if tree is outside the visible viewport
-  const isTreeOffscreen = useMemo(() => {
-    if (typeof window === 'undefined') return false;
-    const viewW = window.innerWidth;
-    const viewH = window.innerHeight;
-    const { minX, minY, maxX, maxY } = layout.boundingBox;
-    const scale = transform.scale || 1.0;
-
-    const screenMinX = transform.x + minX * scale;
-    const screenMinY = transform.y + minY * scale;
-    const screenMaxX = transform.x + maxX * scale;
-    const screenMaxY = transform.y + maxY * scale;
-
-    // Check if overlap exists with viewport
-    const hasOverlap =
-      screenMaxX > 50 &&
-      screenMinX < viewW - 50 &&
-      screenMaxY > 80 &&
-      screenMinY < viewH - 50;
-
-    return !hasOverlap;
-  }, [transform, layout.boundingBox]);
 
   return (
     <div
@@ -176,17 +157,6 @@ export const MindMapCanvas: React.FC = () => {
           />
         ))}
       </div>
-
-      {/* Out of bounds safety indicator button */}
-      {isTreeOffscreen && (
-        <button
-          onClick={handleFitToScreen}
-          className="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold rounded-full shadow-floating text-xs animate-scale-in cursor-pointer transition-transform hover:scale-105"
-        >
-          <Compass className="w-4 h-4" />
-          <span>Схема смещена за экран — Вернуть в центр</span>
-        </button>
-      )}
 
       {/* Floating Bottom-Left Canvas Controls Bar */}
       <div className="fixed bottom-5 left-5 z-40 flex items-center gap-1 p-1 bg-zinc-900/90 border border-zinc-800/90 rounded-xl shadow-floating backdrop-blur-md">

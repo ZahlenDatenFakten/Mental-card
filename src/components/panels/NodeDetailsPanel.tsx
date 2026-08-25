@@ -107,7 +107,7 @@ export const NodeDetailsPanel: React.FC = () => {
   };
 
   return (
-    <aside className="fixed top-14 right-0 bottom-0 z-30 w-80 sm:w-96 bg-zinc-950/95 border-l border-zinc-850 p-5 shadow-2xl flex flex-col justify-between overflow-y-auto backdrop-blur-md animate-fade-in text-zinc-100">
+    <aside className="h-full z-30 w-80 sm:w-96 bg-zinc-950/95 border-l border-zinc-850 p-5 shadow-2xl flex flex-col justify-between overflow-y-auto backdrop-blur-md animate-fade-in text-zinc-100 flex-shrink-0">
       {/* Header */}
       <div>
         <div className="flex items-center justify-between pb-4 mb-4 border-b border-zinc-850">
@@ -463,7 +463,7 @@ export const NodeDetailsPanel: React.FC = () => {
             <>
               <button
                 onClick={() => duplicateNode(currentNode.id)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-lg transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 rounded-lg transition-colors cursor-pointer"
                 title="Дублировать текущую ветку"
               >
                 <Copy className="w-3.5 h-3.5" />

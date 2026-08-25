@@ -12,10 +12,14 @@ export const TreeConnections: React.FC<TreeConnectionsProps> = ({
 }) => {
   return (
     <svg
-      className="absolute inset-0 pointer-events-none overflow-visible"
+      className="pointer-events-none"
       style={{
-        width: '100%',
-        height: '100%',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: 1,
+        height: 1,
+        overflow: 'visible',
       }}
     >
       <defs>

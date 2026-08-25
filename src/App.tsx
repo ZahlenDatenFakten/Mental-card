@@ -16,13 +16,13 @@ export const App: React.FC = () => {
       {/* Top Judicial Header & Navigation Controls */}
       <TopNavigation />
 
-      {/* Main Legal Mind Map Canvas Viewport */}
-      <main className="flex-1 w-full h-full relative pt-14">
-        <MindMapCanvas />
-      </main>
-
-      {/* Right Drawer Inspector for Evidence, Laws, Dates, and Theses */}
-      <NodeDetailsPanel />
+      {/* Main Legal Mind Map Workspace (Canvas + Integrated Right Sidebar) */}
+      <div className="flex-1 w-full h-[calc(100vh-3.5rem)] relative overflow-hidden flex">
+        <main className="flex-1 h-full relative overflow-hidden">
+          <MindMapCanvas />
+        </main>
+        <NodeDetailsPanel />
+      </div>
 
       {/* Quick Search & Command Palette Modal (Cmd+F) */}
       <SearchModal />

@@ -8,12 +8,12 @@ interface UseCanvasPanZoomProps {
 }
 
 export function useCanvasPanZoom({
-  minScale = 0.2,
+  minScale = 0.25,
   maxScale = 2.5,
   initialScale = 1.0,
 }: UseCanvasPanZoomProps = {}) {
   const [transform, setTransform] = useState<CanvasTransform>({
-    x: 100,
+    x: 80,
     y: typeof window !== 'undefined' ? window.innerHeight / 2 - 80 : 300,
     scale: initialScale,
   });
@@ -22,8 +22,56 @@ export function useCanvasPanZoom({
   const [isSpacePressed, setIsSpacePressed] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number; originX: number; originY: number } | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const boundingBoxRef = useRef<TreeBoundingBox | null>(null);
 
-  // Track space bar key state for Space+Drag pan mode
+  /**
+   * Helper to keep the tree always within comfortable viewing bounds (never lost off-screen).
+   */
+  const clampCoordinates = useCallback(
+    (nextX: number, nextY: number, scale: number): { x: number; y: number } => {
+      if (!containerRef.current || !boundingBoxRef.current) {
+        return { x: nextX, y: nextY };
+      }
+
+      const rect = containerRef.current.getBoundingClientRect();
+      const bbox = boundingBoxRef.current;
+      const w = rect.width;
+      const h = rect.height;
+
+      // Allow generous pan margins but guarantee at least 150px of the tree is always visible
+      const visibleMarginX = Math.min(w * 0.35, 250);
+      const visibleMarginY = Math.min(h * 0.35, 200);
+
+      // Boundaries
+      const minX = visibleMarginX - (bbox.maxX * scale);
+      const maxX = (w - visibleMarginX) - (bbox.minX * scale);
+      const minY = visibleMarginY - (bbox.maxY * scale);
+      const maxY = (h - visibleMarginY) - (bbox.minY * scale);
+
+      let clampedX = nextX;
+      let clampedY = nextY;
+
+      if (minX <= maxX) {
+        clampedX = Math.max(minX, Math.min(maxX, nextX));
+      } else {
+        clampedX = (minX + maxX) / 2;
+      }
+
+      if (minY <= maxY) {
+        clampedY = Math.max(minY, Math.min(maxY, nextY));
+      } else {
+        clampedY = (minY + maxY) / 2;
+      }
+
+      return {
+        x: Math.round(clampedX),
+        y: Math.round(clampedY),
+      };
+    },
+    []
+  );
+
+  // Track space bar key state for Space+Drag mode
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -55,7 +103,7 @@ export function useCanvasPanZoom({
   }, []);
 
   /**
-   * Smooth mathematically safe exponential zoom centered at mouse position.
+   * Smooth mathematically safe exponential zoom centered directly at cursor position.
    */
   const handleWheel = useCallback(
     (e: React.WheelEvent<HTMLDivElement>) => {
@@ -66,36 +114,32 @@ export function useCanvasPanZoom({
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
 
-      // Trackpad pinch vs regular mouse scroll wheel
       const isPinch = e.ctrlKey || e.metaKey;
       const delta = -e.deltaY;
 
-      // Exponential factor is strictly positive (> 0) to avoid any negative inversion
-      let zoomFactor: number;
-      if (isPinch) {
-        // Trackpad pinch zoom
-        zoomFactor = Math.exp(delta * 0.008);
-      } else {
-        // Standard mouse scroll step
-        zoomFactor = delta > 0 ? 1.12 : 0.89;
-      }
+      // Exponential factor is strictly positive (> 0)
+      const zoomFactor = isPinch 
+        ? Math.exp(delta * 0.008) 
+        : delta > 0 ? 1.12 : 0.89;
 
       setTransform((prev) => {
         const nextScale = Math.min(Math.max(prev.scale * zoomFactor, minScale), maxScale);
         if (Math.abs(nextScale - prev.scale) < 0.0001) return prev;
 
         const scaleRatio = nextScale / prev.scale;
-        const newX = mouseX - (mouseX - prev.x) * scaleRatio;
-        const newY = mouseY - (mouseY - prev.y) * scaleRatio;
+        const targetX = mouseX - (mouseX - prev.x) * scaleRatio;
+        const targetY = mouseY - (mouseY - prev.y) * scaleRatio;
+
+        const clamped = clampCoordinates(targetX, targetY, nextScale);
 
         return {
-          x: Math.round(newX),
-          y: Math.round(newY),
+          x: clamped.x,
+          y: clamped.y,
           scale: Number(nextScale.toFixed(3)),
         };
       });
     },
-    [minScale, maxScale]
+    [minScale, maxScale, clampCoordinates]
   );
 
   /**
@@ -103,14 +147,14 @@ export function useCanvasPanZoom({
    */
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      // Don't pan if clicking on an interactive node input, button, link or modal
+      // Don't pan if clicking on an interactive node button, input, link or modal
       const target = e.target as HTMLElement;
-      const isInteractiveElement = target.closest('button, input, textarea, a, select, [role="button"], .group');
+      const isInteractive = target.closest('button, input, textarea, a, select, [role="button"], .group');
 
       const isMiddleClick = e.button === 1;
       const isLeftClick = e.button === 0;
 
-      if ((isLeftClick && !isInteractiveElement) || (isLeftClick && isSpacePressed) || isMiddleClick) {
+      if ((isLeftClick && !isInteractive) || (isLeftClick && isSpacePressed) || isMiddleClick) {
         e.preventDefault();
         setIsPanning(true);
         dragStartRef.current = {
@@ -120,7 +164,6 @@ export function useCanvasPanZoom({
           originY: transform.y,
         };
 
-        // Capture pointer events on container
         try {
           containerRef.current?.setPointerCapture(e.pointerId);
         } catch {
@@ -132,7 +175,7 @@ export function useCanvasPanZoom({
   );
 
   /**
-   * Pointer move handling for dragging canvas smoothly.
+   * Pointer move handling for smooth 60/120fps dragging.
    */
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -141,13 +184,19 @@ export function useCanvasPanZoom({
       const dx = e.clientX - dragStartRef.current.x;
       const dy = e.clientY - dragStartRef.current.y;
 
-      setTransform((prev) => ({
-        ...prev,
-        x: Math.round(dragStartRef.current!.originX + dx),
-        y: Math.round(dragStartRef.current!.originY + dy),
-      }));
+      const rawX = dragStartRef.current.originX + dx;
+      const rawY = dragStartRef.current.originY + dy;
+
+      setTransform((prev) => {
+        const clamped = clampCoordinates(rawX, rawY, prev.scale);
+        return {
+          ...prev,
+          x: clamped.x,
+          y: clamped.y,
+        };
+      });
     },
-    [isPanning]
+    [isPanning, clampCoordinates]
   );
 
   /**
@@ -176,14 +225,18 @@ export function useCanvasPanZoom({
 
     setTransform((prev) => {
       const nextScale = Math.min(prev.scale * 1.2, maxScale);
-      const scaleChange = nextScale / prev.scale;
+      const scaleRatio = nextScale / prev.scale;
+      const targetX = cx - (cx - prev.x) * scaleRatio;
+      const targetY = cy - (cy - prev.y) * scaleRatio;
+      const clamped = clampCoordinates(targetX, targetY, nextScale);
+
       return {
-        x: Math.round(cx - (cx - prev.x) * scaleChange),
-        y: Math.round(cy - (cy - prev.y) * scaleChange),
+        x: clamped.x,
+        y: clamped.y,
         scale: Number(nextScale.toFixed(3)),
       };
     });
-  }, [maxScale]);
+  }, [maxScale, clampCoordinates]);
 
   /**
    * Programmatic Zoom Out.
@@ -196,14 +249,18 @@ export function useCanvasPanZoom({
 
     setTransform((prev) => {
       const nextScale = Math.max(prev.scale / 1.2, minScale);
-      const scaleChange = nextScale / prev.scale;
+      const scaleRatio = nextScale / prev.scale;
+      const targetX = cx - (cx - prev.x) * scaleRatio;
+      const targetY = cy - (cy - prev.y) * scaleRatio;
+      const clamped = clampCoordinates(targetX, targetY, nextScale);
+
       return {
-        x: Math.round(cx - (cx - prev.x) * scaleChange),
-        y: Math.round(cy - (cy - prev.y) * scaleChange),
+        x: clamped.x,
+        y: clamped.y,
         scale: Number(nextScale.toFixed(3)),
       };
     });
-  }, [minScale]);
+  }, [minScale, clampCoordinates]);
 
   /**
    * Reset zoom and position to default.
@@ -211,22 +268,27 @@ export function useCanvasPanZoom({
   const resetZoom = useCallback(() => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
+    const targetX = Math.round(rect.width * 0.1);
+    const targetY = Math.round(rect.height / 2 - 30);
+    const clamped = clampCoordinates(targetX, targetY, 1.0);
+
     setTransform({
-      x: Math.round(rect.width * 0.1),
-      y: Math.round(rect.height / 2 - 30),
+      x: clamped.x,
+      y: clamped.y,
       scale: 1.0,
     });
-  }, []);
+  }, [clampCoordinates]);
 
   /**
    * Fits the entire mental map bounding box neatly within the canvas viewport with comfortable padding.
    */
   const fitToBoundingBox = useCallback(
     (bbox: TreeBoundingBox) => {
+      boundingBoxRef.current = bbox;
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
-      const paddingX = 100;
-      const paddingY = 80;
+      const paddingX = 80;
+      const paddingY = 60;
 
       const availWidth = Math.max(200, rect.width - paddingX * 2);
       const availHeight = Math.max(200, rect.height - paddingY * 2);
@@ -238,7 +300,7 @@ export function useCanvasPanZoom({
       const scaleY = availHeight / treeH;
       const fitScale = Math.min(Math.max(Math.min(scaleX, scaleY), minScale), 1.15);
 
-      // Center tree in canvas viewport
+      // Center tree perfectly in canvas viewport
       const treeCenterX = bbox.minX + bbox.width / 2;
       const treeCenterY = bbox.minY + bbox.height / 2;
 
@@ -265,12 +327,21 @@ export function useCanvasPanZoom({
       const targetCenterX = nodeX + nodeWidth / 2;
       const targetCenterY = nodeY + nodeHeight / 2;
 
+      const targetX = rect.width / 2 - targetCenterX * prev.scale;
+      const targetY = rect.height / 2 - targetCenterY * prev.scale;
+      const clamped = clampCoordinates(targetX, targetY, prev.scale);
+
       return {
         ...prev,
-        x: Math.round(rect.width / 2 - targetCenterX * prev.scale),
-        y: Math.round(rect.height / 2 - targetCenterY * prev.scale),
+        x: clamped.x,
+        y: clamped.y,
       };
     });
+  }, [clampCoordinates]);
+
+  // Keep bounding box ref up to date
+  const updateBoundingBox = useCallback((bbox: TreeBoundingBox) => {
+    boundingBoxRef.current = bbox;
   }, []);
 
   return {
@@ -288,5 +359,6 @@ export function useCanvasPanZoom({
     resetZoom,
     fitToBoundingBox,
     centerOnNode,
+    updateBoundingBox,
   };
 }
