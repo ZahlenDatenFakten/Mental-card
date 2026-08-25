@@ -183,7 +183,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
   const hasChildren = node.children.length > 0 || node.collapsedCount > 0;
   const isRoot = node.isRoot;
 
-  // Apple SF Pro Type Badges and Harmonious Tints
+  // Exact Apple HIG semantic colors
   const getNodeTypeBadge = (type?: LegalNodeType) => {
     switch (type) {
       case 'thesis':
@@ -261,18 +261,18 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
         e.stopPropagation();
         onStartEdit(node.id);
       }}
-      className={`group absolute select-none flex items-center transition-all duration-100 rounded-2xl cursor-grab active:cursor-grabbing apple-glass-card ${
+      className={`group absolute select-none flex items-center rounded-2xl cursor-grab active:cursor-grabbing apple-card ${
         isRoot
-          ? 'border-white/[0.18] shadow-apple-card z-20 bg-[#1c1c1e]/95'
+          ? 'z-20 bg-[#28282A] border-white/20'
           : 'z-10'
       } ${
         isDraggingThisNode
-          ? 'ring-2 ring-[#0A84FF] border-[#0A84FF] scale-[1.025] shadow-[0_24px_48px_rgba(0,0,0,0.65)] z-50 opacity-95 pointer-events-none'
+          ? 'scale-[1.025] shadow-apple-drag z-50 opacity-95 pointer-events-none'
           : isHoverTarget
-          ? 'ring-2 ring-[#5E5CE6] border-[#5E5CE6] bg-[#5E5CE6]/20 scale-[1.02] shadow-apple-active z-40'
+          ? 'shadow-apple-focus ring-2 ring-[#5E5CE6] bg-[#5E5CE6]/20 scale-[1.02] z-40'
           : isSelected
-          ? 'ring-[2px] ring-[#0A84FF] border-[#0A84FF]/80 shadow-[0_0_0_1px_#0A84FF,0_8px_32px_rgba(10,132,255,0.3)] z-30'
-          : 'hover:border-white/[0.18] hover:shadow-apple-hover'
+          ? 'shadow-apple-focus z-30'
+          : ''
       } ${isFilteredOut ? 'opacity-30 scale-[0.98]' : 'opacity-100'}`}
       style={{
         transform: `translate3d(${currentX}px, ${currentY}px, 0)`,
@@ -280,23 +280,23 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
         touchAction: 'none',
       }}
     >
-      {/* Apple Accent Bar */}
+      {/* Apple Accent Bar Indicator */}
       {node.color && (
         <div
-          className="w-1.5 self-stretch rounded-l-[14px] flex-shrink-0"
+          className="w-1.5 self-stretch rounded-l-[15px] flex-shrink-0"
           style={{ backgroundColor: node.color }}
         />
       )}
 
       {/* Main Node Content */}
-      <div className="flex items-center gap-2 px-3.5 py-1 text-sm overflow-hidden whitespace-nowrap">
-        {/* Subtle Grip Drag Handle on hover */}
+      <div className="flex items-center gap-2.5 px-3.5 py-1 text-sm overflow-hidden whitespace-nowrap">
+        {/* Subtle Grip Drag Handle */}
         {!isRoot && (
           <div
             title="Свободно переместить блок или ветку"
             className="text-white/20 group-hover:text-white/50 transition-colors -ml-1 cursor-grab"
           >
-            <GripHorizontal className="w-3 h-3" />
+            <GripHorizontal className="w-3.5 h-3.5" />
           </div>
         )}
 
@@ -304,7 +304,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
         {typeBadge && (
           <div
             title={`Тип: ${typeBadge.label}`}
-            className={`flex items-center justify-center p-1 rounded-lg border ${typeBadge.bg} flex-shrink-0`}
+            className={`flex items-center justify-center p-1 rounded-xl border ${typeBadge.bg} flex-shrink-0 shadow-sm`}
           >
             {typeBadge.icon}
           </div>
@@ -328,8 +328,8 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
               isRoot
                 ? 'text-white font-semibold text-[14.5px]'
                 : node.depth === 1
-                ? 'text-zinc-100 font-medium text-[13.5px]'
-                : 'text-zinc-200 text-[13px]'
+                ? 'text-[#F5F5F7] font-medium text-[13.5px]'
+                : 'text-[#EBEBF5] text-[13px]'
             }`}
           >
             {node.title}
@@ -340,7 +340,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
         {node.eventDate && (
           <span
             title={`Дата события: ${node.eventDate}`}
-            className="inline-flex items-center gap-1 text-[11px] font-mono font-medium text-amber-300 bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.2 rounded-md"
+            className="inline-flex items-center gap-1 text-[11px] font-mono font-medium text-[#FFD60A] bg-[#FF9F0A]/15 border border-[#FF9F0A]/30 px-2 py-0.5 rounded-lg"
           >
             <Calendar className="w-2.5 h-2.5" />
             {node.eventDate}
@@ -351,7 +351,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
         {node.lawArticle && (
           <span
             title={`Статья закона: ${node.lawArticle}`}
-            className="inline-flex items-center gap-1 text-[11px] font-mono text-sky-300 bg-sky-500/15 border border-sky-500/30 px-1.5 py-0.2 rounded-md max-w-[140px] truncate"
+            className="inline-flex items-center gap-1 text-[11px] font-mono text-[#64D2FF] bg-[#0A84FF]/15 border border-[#0A84FF]/30 px-2 py-0.5 rounded-lg max-w-[140px] truncate"
           >
             <BookOpen className="w-2.5 h-2.5 flex-shrink-0" />
             <span className="truncate">{node.lawArticle}</span>
@@ -362,7 +362,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
         {(node.casePages || node.caseVolume) && (
           <span
             title={`Материалы дела: ${[node.caseVolume, node.casePages].filter(Boolean).join(', ')}`}
-            className="inline-flex items-center gap-1 text-[11px] font-mono text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.2 rounded-md"
+            className="inline-flex items-center gap-1 text-[11px] font-mono text-[#30D158] bg-[#30D158]/15 border border-[#30D158]/30 px-2 py-0.5 rounded-lg"
           >
             <FileCheck className="w-2.5 h-2.5" />
             {[node.caseVolume, node.casePages].filter(Boolean).join(', ')}
@@ -373,9 +373,9 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
         {node.strengthScore && (
           <span
             title={`Весомость доказательства: ${node.strengthScore} из 5`}
-            className="inline-flex items-center gap-0.5 text-[10px] font-mono text-amber-400 bg-white/[0.06] border border-white/[0.1] px-1 py-0.2 rounded-md"
+            className="inline-flex items-center gap-0.5 text-[10px] font-mono text-[#FFD60A] bg-white/[0.08] border border-white/[0.12] px-1.5 py-0.5 rounded-lg"
           >
-            <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+            <Star className="w-2.5 h-2.5 fill-[#FFD60A] text-[#FFD60A]" />
             {node.strengthScore}
           </span>
         )}
@@ -386,7 +386,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
             {node.tags.slice(0, 2).map((tag, idx) => (
               <span
                 key={idx}
-                className="text-[10px] font-mono text-zinc-400 bg-white/[0.05] px-1.5 py-0.2 rounded-md border border-white/[0.08]"
+                className="text-[10px] font-mono text-[#8E8E93] bg-white/[0.06] px-1.5 py-0.5 rounded-lg border border-white/[0.08]"
               >
                 #{tag}
               </span>
@@ -403,7 +403,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
               setSidebarOpen(true);
             }}
             title={node.notes}
-            className="text-zinc-400 hover:text-emerald-400 transition-colors p-0.5 rounded-lg hover:bg-white/[0.08]"
+            className="text-[#8E8E93] hover:text-[#30D158] transition-colors p-0.5 rounded-lg hover:bg-white/[0.08]"
           >
             <FileText className="w-3.5 h-3.5" />
           </button>
@@ -417,7 +417,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
             title={node.url}
-            className="text-zinc-400 hover:text-sky-400 transition-colors p-0.5 rounded-lg hover:bg-white/[0.08]"
+            className="text-[#8E8E93] hover:text-[#0A84FF] transition-colors p-0.5 rounded-lg hover:bg-white/[0.08]"
           >
             <ExternalLink className="w-3.5 h-3.5" />
           </a>
@@ -435,7 +435,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
           className={`flex items-center justify-center h-5 px-1.5 mr-1.5 rounded-lg text-[11px] font-mono transition-all ${
             node.isCollapsed
               ? 'bg-[#30D158]/20 text-[#30D158] border border-[#30D158]/40 hover:bg-[#30D158]/30'
-              : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.08]'
+              : 'text-[#8E8E93] hover:text-white hover:bg-white/[0.08]'
           }`}
         >
           {node.isCollapsed ? (
@@ -451,7 +451,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
 
       {/* Quick Action Floating Controls (Apple Glass Capsule) */}
       <div
-        className={`absolute left-full ml-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-150 pointer-events-none group-hover:pointer-events-auto p-1 apple-glass rounded-xl shadow-apple-card ${
+        className={`absolute left-full ml-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-120 pointer-events-none group-hover:pointer-events-auto p-1 apple-hud-pill ${
           isSelected && !isDraggingThisNode ? 'opacity-100 pointer-events-auto' : ''
         }`}
       >
@@ -462,7 +462,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
             onAddChild(node.id);
           }}
           title="Добавить дочерний элемент (Tab)"
-          className="flex items-center justify-center w-6 h-6 bg-white/[0.08] hover:bg-[#30D158] text-zinc-200 hover:text-black rounded-lg border border-white/[0.1] shadow-sm transition-all active:scale-[0.92] cursor-pointer"
+          className="flex items-center justify-center w-6 h-6 bg-white/[0.08] hover:bg-[#30D158] text-[#EBEBF5] hover:text-black rounded-lg border border-white/[0.1] transition-all active:scale-[0.92] cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" />
         </button>
@@ -474,7 +474,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
             onStartEdit(node.id);
           }}
           title="Редактировать текст (F2)"
-          className="flex items-center justify-center w-6 h-6 bg-white/[0.08] hover:bg-white/[0.15] text-zinc-200 hover:text-white rounded-lg border border-white/[0.1] shadow-sm transition-all active:scale-[0.92] cursor-pointer"
+          className="flex items-center justify-center w-6 h-6 bg-white/[0.08] hover:bg-white/[0.18] text-[#EBEBF5] hover:text-white rounded-lg border border-white/[0.1] transition-all active:scale-[0.92] cursor-pointer"
         >
           <Edit3 className="w-3.5 h-3.5" />
         </button>
@@ -487,18 +487,18 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
               duplicateNode(node.id);
             }}
             title="Дублировать ветку"
-            className="flex items-center justify-center w-6 h-6 bg-white/[0.08] hover:bg-[#BF5AF2] text-zinc-200 hover:text-white rounded-lg border border-white/[0.1] shadow-sm transition-all active:scale-[0.92] cursor-pointer"
+            className="flex items-center justify-center w-6 h-6 bg-white/[0.08] hover:bg-[#BF5AF2] text-[#EBEBF5] hover:text-white rounded-lg border border-white/[0.1] transition-all active:scale-[0.92] cursor-pointer"
           >
             <Copy className="w-3.5 h-3.5" />
           </button>
         )}
 
-        {/* Delete Node (Non-root) */}
+        {/* Delete Node */}
         {!isRoot && (
           <button
             onClick={handleDeleteWithConfirm}
             title="Удалить узел со всем поддеревом (Del)"
-            className="flex items-center justify-center w-6 h-6 bg-white/[0.08] hover:bg-[#FF453A] text-zinc-400 hover:text-white rounded-lg border border-white/[0.1] shadow-sm transition-all active:scale-[0.92] cursor-pointer"
+            className="flex items-center justify-center w-6 h-6 bg-white/[0.08] hover:bg-[#FF453A] text-[#8E8E93] hover:text-white rounded-lg border border-white/[0.1] transition-all active:scale-[0.92] cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>

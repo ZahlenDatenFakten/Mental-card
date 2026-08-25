@@ -46,7 +46,7 @@ const LEGAL_TYPES: { type: LegalNodeType; label: string; icon: React.ReactNode; 
   { type: 'rebuttal', label: 'Опровержение', icon: <Zap className="w-4 h-4 text-[#FFD60A]" />, desc: 'Контр-позиция и доказательства' },
   { type: 'risk', label: 'Риск / Уязвимость', icon: <AlertTriangle className="w-4 h-4 text-[#FF453A]" />, desc: 'Слабое место позиции в суде' },
   { type: 'remedy', label: 'Требование иска', icon: <Gavel className="w-4 h-4 text-[#FF375F]" />, desc: 'Просительная часть' },
-  { type: 'general', label: 'Общий блок', icon: <FileText className="w-4 h-4 text-zinc-400" />, desc: 'Вспомогательная ветка' },
+  { type: 'general', label: 'Общий блок', icon: <FileText className="w-4 h-4 text-[#8E8E93]" />, desc: 'Вспомогательная ветка' },
 ];
 
 export const NodeDetailsPanel: React.FC = () => {
@@ -121,10 +121,10 @@ export const NodeDetailsPanel: React.FC = () => {
   };
 
   return (
-    <aside className="h-full z-30 w-80 sm:w-96 apple-glass border-l border-white/[0.08] p-5 shadow-2xl flex flex-col justify-between overflow-y-auto text-zinc-100 flex-shrink-0 animate-apple-fade-in">
+    <aside className="h-full z-30 w-80 sm:w-96 apple-vibrant-panel p-5 flex flex-col justify-between overflow-y-auto text-[#F5F5F7] flex-shrink-0 animate-apple-fade-in">
       {/* Header */}
       <div>
-        <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-white/[0.06]">
+        <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-white/[0.08]">
           <div className="flex items-center gap-2.5">
             <div
               className="w-3 h-3 rounded-full shadow-sm"
@@ -138,21 +138,21 @@ export const NodeDetailsPanel: React.FC = () => {
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="p-1 text-zinc-400 hover:text-white hover:bg-white/[0.08] rounded-lg transition-all active:scale-[0.92] cursor-pointer"
+            className="p-1 text-[#8E8E93] hover:text-white hover:bg-white/[0.08] rounded-lg transition-all active:scale-[0.92] cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {!currentNode ? (
-          <div className="py-16 text-center text-zinc-500 text-xs">
+          <div className="py-16 text-center text-[#8E8E93] text-xs">
             Выберите узел на схеме для настройки доказательств и правовой позиции
           </div>
         ) : (
           <div className="space-y-4">
             {/* Legal Entity Type Selector */}
             <div>
-              <label className="block text-[11px] font-semibold text-zinc-300 mb-1.5 uppercase tracking-wider">
+              <label className="block text-[11px] font-semibold text-[#8E8E93] mb-1.5 uppercase tracking-wider">
                 Категория блока
               </label>
               <div className="grid grid-cols-2 gap-1.5 max-h-44 overflow-y-auto pr-1">
@@ -164,8 +164,8 @@ export const NodeDetailsPanel: React.FC = () => {
                       onClick={() => handleTypeChange(item.type)}
                       className={`flex items-center gap-2 p-2 rounded-xl border text-left text-xs transition-all cursor-pointer ${
                         isCurrent
-                          ? 'bg-[#0A84FF]/20 border-[#0A84FF] text-white shadow-sm ring-1 ring-[#0A84FF]/40'
-                          : 'bg-white/[0.03] border-white/[0.06] text-zinc-400 hover:bg-white/[0.07] hover:text-zinc-200'
+                          ? 'bg-[#0A84FF]/25 border-[#0A84FF] text-white shadow-sm ring-1 ring-[#0A84FF]/50'
+                          : 'bg-white/[0.04] border-white/[0.08] text-[#8E8E93] hover:bg-white/[0.08] hover:text-white'
                       }`}
                     >
                       {item.icon}
@@ -178,7 +178,7 @@ export const NodeDetailsPanel: React.FC = () => {
 
             {/* Title */}
             <div>
-              <label className="block text-[11px] font-medium text-zinc-400 mb-1">
+              <label className="block text-[11px] font-medium text-[#8E8E93] mb-1">
                 Формулировка / Заголовок
               </label>
               <input
@@ -186,18 +186,18 @@ export const NodeDetailsPanel: React.FC = () => {
                 value={currentNode.title}
                 onChange={handleTitleChange}
                 placeholder="Сформулируйте тезис, факт или требование..."
-                className="w-full bg-black/40 border border-white/[0.08] focus:border-[#0A84FF] focus:ring-2 focus:ring-[#0A84FF]/20 text-white px-3 py-2 rounded-xl text-xs outline-none transition-all shadow-inner"
+                className="w-full bg-black/40 border border-white/[0.1] focus:border-[#0A84FF] focus:ring-2 focus:ring-[#0A84FF]/25 text-white px-3 py-2 rounded-xl text-xs outline-none transition-all shadow-inner font-sans"
               />
             </div>
 
             {/* Law Article / Norm & Citation */}
-            <div className="p-3.5 bg-white/[0.03] border border-white/[0.06] rounded-2xl space-y-2.5 shadow-sm">
+            <div className="p-3.5 apple-inset-group space-y-2.5">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-[#64D2FF]">
                 <BookOpen className="w-3.5 h-3.5" />
                 <span>Норма права и закон</span>
               </div>
               <div>
-                <label className="block text-[10.5px] text-zinc-400 mb-1">
+                <label className="block text-[10.5px] text-[#8E8E93] mb-1">
                   Статья закона / Пленум ВС РФ
                 </label>
                 <input
@@ -209,7 +209,7 @@ export const NodeDetailsPanel: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-[10.5px] text-zinc-400 mb-1">
+                <label className="block text-[10.5px] text-[#8E8E93] mb-1">
                   Цитата из закона / судебного акта
                 </label>
                 <textarea
@@ -217,20 +217,20 @@ export const NodeDetailsPanel: React.FC = () => {
                   onChange={(e) => selectedId && updateNode(selectedId, { citation: e.target.value })}
                   placeholder="Точная выдержка или правовая позиция..."
                   rows={2}
-                  className="w-full bg-black/40 border border-white/[0.08] focus:border-[#0A84FF] text-white p-2 rounded-xl text-xs outline-none resize-none transition-all leading-relaxed"
+                  className="w-full bg-black/40 border border-white/[0.08] focus:border-[#0A84FF] text-white p-2 rounded-xl text-xs outline-none resize-none transition-all leading-relaxed font-sans"
                 />
               </div>
             </div>
 
             {/* Evidence & Case File Details (Том, Лист дела) */}
-            <div className="p-3.5 bg-white/[0.03] border border-white/[0.06] rounded-2xl space-y-2.5 shadow-sm">
+            <div className="p-3.5 apple-inset-group space-y-2.5">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-[#30D158]">
                 <FileCheck className="w-3.5 h-3.5" />
                 <span>Материалы дела и доказательства</span>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[10.5px] text-zinc-400 mb-1">
+                  <label className="block text-[10.5px] text-[#8E8E93] mb-1">
                     Том дела
                   </label>
                   <input
@@ -242,7 +242,7 @@ export const NodeDetailsPanel: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10.5px] text-zinc-400 mb-1">
+                  <label className="block text-[10.5px] text-[#8E8E93] mb-1">
                     Листы дела (л.д.)
                   </label>
                   <input
@@ -257,42 +257,42 @@ export const NodeDetailsPanel: React.FC = () => {
 
               {/* Evidence Status */}
               <div>
-                <label className="block text-[10.5px] text-zinc-400 mb-1">
+                <label className="block text-[10.5px] text-[#8E8E93] mb-1">
                   Статус приобщения к делу
                 </label>
                 <select
                   value={currentNode.evidenceStatus || 'attached'}
                   onChange={(e) => selectedId && updateNode(selectedId, { evidenceStatus: e.target.value as EvidenceStatus })}
-                  className="w-full bg-black/40 border border-white/[0.08] focus:border-[#30D158] text-zinc-200 px-2.5 py-1.5 rounded-xl text-xs outline-none transition-all"
+                  className="w-full bg-[#1c1c1e] border border-white/[0.08] focus:border-[#30D158] text-white px-2.5 py-1.5 rounded-xl text-xs outline-none transition-all"
                 >
-                  <option value="attached" className="bg-[#1c1c1e]">Приобщено к материалам дела</option>
-                  <option value="motion_pending" className="bg-[#1c1c1e]">Заявлено ходатайство о приобщении</option>
-                  <option value="to_request" className="bg-[#1c1c1e]">Требуется истребовать через суд</option>
-                  <option value="excluded" className="bg-[#1c1c1e]">Исключено / Недопустимое</option>
+                  <option value="attached">Приобщено к материалам дела</option>
+                  <option value="motion_pending">Заявлено ходатайство о приобщении</option>
+                  <option value="to_request">Требуется истребовать через суд</option>
+                  <option value="excluded">Исключено / Недопустимое</option>
                 </select>
               </div>
 
               {/* Evidence Type */}
               <div>
-                <label className="block text-[10.5px] text-zinc-400 mb-1">
+                <label className="block text-[10.5px] text-[#8E8E93] mb-1">
                   Вид доказательства
                 </label>
                 <select
                   value={currentNode.evidenceType || 'written'}
                   onChange={(e) => selectedId && updateNode(selectedId, { evidenceType: e.target.value as EvidenceType })}
-                  className="w-full bg-black/40 border border-white/[0.08] focus:border-[#30D158] text-zinc-200 px-2.5 py-1.5 rounded-xl text-xs outline-none transition-all"
+                  className="w-full bg-[#1c1c1e] border border-white/[0.08] focus:border-[#30D158] text-white px-2.5 py-1.5 rounded-xl text-xs outline-none transition-all"
                 >
-                  <option value="written" className="bg-[#1c1c1e]">Письменное доказательство</option>
-                  <option value="expertise" className="bg-[#1c1c1e]">Судебная экспертиза</option>
-                  <option value="witness" className="bg-[#1c1c1e]">Свидетельские показания</option>
-                  <option value="electronic" className="bg-[#1c1c1e]">Электронная переписка</option>
-                  <option value="audio_video" className="bg-[#1c1c1e]">Аудио- / Видеозапись</option>
+                  <option value="written">Письменное доказательство</option>
+                  <option value="expertise">Судебная экспертиза</option>
+                  <option value="witness">Свидетельские показания</option>
+                  <option value="electronic">Электронная переписка</option>
+                  <option value="audio_video">Аудио- / Видеозапись</option>
                 </select>
               </div>
 
               {/* Strength Score (1-5) */}
               <div>
-                <label className="block text-[10.5px] text-zinc-400 mb-1">
+                <label className="block text-[10.5px] text-[#8E8E93] mb-1">
                   Весомость доказательства
                 </label>
                 <div className="flex items-center gap-1.5">
@@ -302,8 +302,8 @@ export const NodeDetailsPanel: React.FC = () => {
                       onClick={() => selectedId && updateNode(selectedId, { strengthScore: score })}
                       className={`flex-1 py-1 rounded-lg border text-xs font-mono flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-[0.92] ${
                         (currentNode.strengthScore || 0) >= score
-                          ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
-                          : 'bg-white/[0.03] border-white/[0.06] text-zinc-500 hover:bg-white/[0.06]'
+                          ? 'bg-[#FF9F0A]/20 border-[#FF9F0A]/50 text-[#FFD60A]'
+                          : 'bg-white/[0.04] border-white/[0.08] text-[#8E8E93] hover:bg-white/[0.08]'
                       }`}
                     >
                       <Star className="w-3 h-3 fill-current" />
@@ -315,39 +315,39 @@ export const NodeDetailsPanel: React.FC = () => {
             </div>
 
             {/* Timeline Event Date */}
-            <div className="p-3.5 bg-white/[0.03] border border-white/[0.06] rounded-2xl space-y-2 shadow-sm">
+            <div className="p-3.5 apple-inset-group space-y-2">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-[#FF9F0A]">
                 <Calendar className="w-3.5 h-3.5" />
                 <span>Дата в хронологии</span>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[10.5px] text-zinc-400 mb-1">
+                  <label className="block text-[10.5px] text-[#8E8E93] mb-1">
                     Дата события
                   </label>
                   <input
                     type="date"
                     value={currentNode.eventDate || ''}
                     onChange={(e) => selectedId && updateNode(selectedId, { eventDate: e.target.value })}
-                    className="w-full bg-black/40 border border-white/[0.08] focus:border-[#FF9F0A] text-white px-2 py-1.5 rounded-xl text-xs outline-none transition-all"
+                    className="w-full bg-black/40 border border-white/[0.08] focus:border-[#FF9F0A] text-white px-2.5 py-1.5 rounded-xl text-xs outline-none transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10.5px] text-zinc-400 mb-1">
+                  <label className="block text-[10.5px] text-[#8E8E93] mb-1">
                     Время (опц.)
                   </label>
                   <input
                     type="time"
                     value={currentNode.eventTime || ''}
                     onChange={(e) => selectedId && updateNode(selectedId, { eventTime: e.target.value })}
-                    className="w-full bg-black/40 border border-white/[0.08] focus:border-[#FF9F0A] text-white px-2 py-1.5 rounded-xl text-xs outline-none transition-all"
+                    className="w-full bg-black/40 border border-white/[0.08] focus:border-[#FF9F0A] text-white px-2.5 py-1.5 rounded-xl text-xs outline-none transition-all"
                   />
                 </div>
               </div>
             </div>
 
             {/* Opponent Argument & Counter-position */}
-            <div className="p-3.5 bg-white/[0.03] border border-white/[0.06] rounded-2xl space-y-2 shadow-sm">
+            <div className="p-3.5 apple-inset-group space-y-2">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-[#FF9F0A]">
                 <ShieldAlert className="w-3.5 h-3.5" />
                 <span>Позиция оппонента и возражения</span>
@@ -357,22 +357,22 @@ export const NodeDetailsPanel: React.FC = () => {
                 onChange={(e) => selectedId && updateNode(selectedId, { opponentStance: e.target.value })}
                 placeholder="Что заявляет или может заявить противная сторона..."
                 rows={2}
-                className="w-full bg-black/40 border border-white/[0.08] focus:border-[#FF9F0A] text-white p-2 rounded-xl text-xs outline-none resize-none transition-all leading-relaxed"
+                className="w-full bg-black/40 border border-white/[0.08] focus:border-[#FF9F0A] text-white p-2 rounded-xl text-xs outline-none resize-none transition-all leading-relaxed font-sans"
               />
             </div>
 
-            {/* Accent Color */}
+            {/* Accent Color Picker */}
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-medium text-zinc-300 mb-2">
-                <Palette className="w-3.5 h-3.5" />
+              <label className="flex items-center gap-1.5 text-xs font-medium text-[#EBEBF5] mb-2">
+                <Palette className="w-3.5 h-3.5 text-[#0A84FF]" />
                 Цветовой маркер ветки
               </label>
               <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={() => handleColorChange(undefined)}
                   title="По умолчанию"
-                  className={`w-6 h-6 rounded-full border flex items-center justify-center text-[10px] text-zinc-400 cursor-pointer transition-all active:scale-[0.9] ${
-                    !currentNode.color ? 'border-[#0A84FF] ring-2 ring-[#0A84FF]/30' : 'border-white/[0.15] hover:border-white/[0.4]'
+                  className={`w-6 h-6 rounded-full border flex items-center justify-center text-[10px] text-[#8E8E93] cursor-pointer transition-all active:scale-[0.9] ${
+                    !currentNode.color ? 'border-[#0A84FF] ring-2 ring-[#0A84FF]/40' : 'border-white/[0.2] hover:border-white/[0.5]'
                   }`}
                 >
                   ✕
@@ -394,20 +394,20 @@ export const NodeDetailsPanel: React.FC = () => {
 
             {/* Custom Tags */}
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-medium text-zinc-300 mb-1.5">
-                <Tag className="w-3.5 h-3.5" />
+              <label className="flex items-center gap-1.5 text-xs font-medium text-[#EBEBF5] mb-1.5">
+                <Tag className="w-3.5 h-3.5 text-[#0A84FF]" />
                 Теги (Enter для добавления)
               </label>
               <div className="flex flex-wrap items-center gap-1.5 mb-2">
                 {currentNode.tags?.map((t) => (
                   <span
                     key={t}
-                    className="inline-flex items-center gap-1 text-xs font-mono text-zinc-200 bg-white/[0.06] border border-white/[0.08] px-2 py-0.5 rounded-lg"
+                    className="inline-flex items-center gap-1 text-xs font-mono text-[#EBEBF5] bg-white/[0.08] border border-white/[0.1] px-2 py-0.5 rounded-lg"
                   >
                     #{t}
                     <button
                       onClick={() => handleRemoveTag(t)}
-                      className="text-zinc-500 hover:text-[#FF453A] transition-colors cursor-pointer"
+                      className="text-[#8E8E93] hover:text-[#FF453A] transition-colors cursor-pointer"
                     >
                       ×
                     </button>
@@ -420,14 +420,14 @@ export const NodeDetailsPanel: React.FC = () => {
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleAddTag}
                 placeholder="Добавить тег..."
-                className="w-full bg-black/40 border border-white/[0.08] focus:border-[#0A84FF] text-white px-3 py-1.5 rounded-xl text-xs outline-none transition-all"
+                className="w-full bg-black/40 border border-white/[0.1] focus:border-[#0A84FF] text-white px-3 py-1.5 rounded-xl text-xs outline-none transition-all font-sans"
               />
             </div>
 
             {/* External URL Reference */}
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-medium text-zinc-300 mb-1.5">
-                <Link className="w-3.5 h-3.5" />
+              <label className="flex items-center gap-1.5 text-xs font-medium text-[#EBEBF5] mb-1.5">
+                <Link className="w-3.5 h-3.5 text-[#0A84FF]" />
                 Ссылка (Kad.Arbitr, Карточка дела)
               </label>
               <div className="flex items-center gap-1.5">
@@ -436,14 +436,14 @@ export const NodeDetailsPanel: React.FC = () => {
                   value={currentNode.url || ''}
                   onChange={handleUrlChange}
                   placeholder="https://kad.arbitr.ru/..."
-                  className="flex-1 bg-black/40 border border-white/[0.08] focus:border-[#0A84FF] text-white px-3 py-2 rounded-xl text-xs outline-none transition-all"
+                  className="flex-1 bg-black/40 border border-white/[0.1] focus:border-[#0A84FF] text-white px-3 py-2 rounded-xl text-xs outline-none transition-all font-sans"
                 />
                 {currentNode.url && (
                   <a
                     href={currentNode.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2 bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white border border-white/[0.08] rounded-xl transition-all active:scale-[0.92] cursor-pointer"
+                    className="p-2 apple-btn-secondary transition-all active:scale-[0.92] cursor-pointer"
                     title="Открыть карточку дела"
                   >
                     <ExternalLink className="w-4 h-4" />
@@ -454,8 +454,8 @@ export const NodeDetailsPanel: React.FC = () => {
 
             {/* Markdown Legal Notes */}
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-medium text-zinc-300 mb-1.5">
-                <FileText className="w-3.5 h-3.5" />
+              <label className="flex items-center gap-1.5 text-xs font-medium text-[#EBEBF5] mb-1.5">
+                <FileText className="w-3.5 h-3.5 text-[#0A84FF]" />
                 Юридические заметки (Markdown)
               </label>
               <textarea
@@ -463,7 +463,7 @@ export const NodeDetailsPanel: React.FC = () => {
                 onChange={handleNotesChange}
                 rows={4}
                 placeholder="Развернутые комментарии, ссылки на обстоятельства, тактика доказывания..."
-                className="w-full bg-black/40 border border-white/[0.08] focus:border-[#0A84FF] text-white p-3 rounded-2xl text-xs font-mono outline-none resize-y transition-all leading-relaxed"
+                className="w-full bg-black/40 border border-white/[0.1] focus:border-[#0A84FF] text-white p-3 rounded-2xl text-xs font-mono outline-none resize-y transition-all leading-relaxed"
               />
             </div>
           </div>
@@ -472,12 +472,12 @@ export const NodeDetailsPanel: React.FC = () => {
 
       {/* Footer Actions */}
       {currentNode && (
-        <div className="pt-3.5 mt-5 border-t border-white/[0.06] flex items-center justify-between gap-2">
+        <div className="pt-3.5 mt-5 border-t border-white/[0.08] flex items-center justify-between gap-2">
           {currentNode.id !== root.id ? (
             <>
               <button
                 onClick={() => duplicateNode(currentNode.id)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:text-white bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] rounded-xl transition-all active:scale-[0.94] cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium apple-btn-secondary transition-all active:scale-[0.94] cursor-pointer"
                 title="Дублировать текущую ветку"
               >
                 <Copy className="w-3.5 h-3.5" />
@@ -494,7 +494,7 @@ export const NodeDetailsPanel: React.FC = () => {
               </button>
             </>
           ) : (
-            <div className="text-[11px] text-zinc-500 font-mono">
+            <div className="text-[11px] text-[#8E8E93] font-mono">
               Корневой блок судебного дела
             </div>
           )}

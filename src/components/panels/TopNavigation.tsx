@@ -73,22 +73,22 @@ export const TopNavigation: React.FC = () => {
         return {
           label: '1. Окружная инстанция',
           short: 'Окружной суд',
-          icon: <Building2 className="w-3.5 h-3.5 text-sky-400" />,
-          style: 'bg-sky-500/15 border-sky-500/30 text-sky-300',
+          icon: <Building2 className="w-3.5 h-3.5 text-[#0A84FF]" />,
+          style: 'bg-[#0A84FF]/15 border-[#0A84FF]/30 text-[#64D2FF]',
         };
       case 'appellate':
         return {
           label: '2. Апелляционная инстанция',
           short: 'Апелляционный суд',
-          icon: <Scale className="w-3.5 h-3.5 text-purple-400" />,
-          style: 'bg-purple-500/15 border-purple-500/30 text-purple-300',
+          icon: <Scale className="w-3.5 h-3.5 text-[#BF5AF2]" />,
+          style: 'bg-[#BF5AF2]/15 border-[#BF5AF2]/30 text-[#E0B0FF]',
         };
       case 'supreme':
         return {
           label: '3. Верховная инстанция',
           short: 'Верховный Суд',
-          icon: <Crown className="w-3.5 h-3.5 text-emerald-400" />,
-          style: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300',
+          icon: <Crown className="w-3.5 h-3.5 text-[#30D158]" />,
+          style: 'bg-[#30D158]/15 border-[#30D158]/30 text-[#30D158]',
         };
     }
   };
@@ -101,35 +101,48 @@ export const TopNavigation: React.FC = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 h-13 px-3 sm:px-4 apple-glass border-b border-white/[0.08] flex items-center justify-between select-none text-zinc-100 transition-all">
-      {/* Left Section: macOS Case Switcher & Instance Pill */}
-      <div className="flex items-center gap-2" ref={caseMenuRef}>
+    <header className="fixed top-0 left-0 right-0 z-40 h-13 px-3.5 apple-vibrant-bar flex items-center justify-between select-none text-[#F5F5F7]">
+      {/* Left: macOS Traffic Lights & Case Switcher */}
+      <div className="flex items-center gap-3.5" ref={caseMenuRef}>
+        {/* Authentic macOS Window Controls (Traffic Lights) */}
+        <div className="hidden sm:flex items-center gap-2 group mr-1">
+          <div className="w-3 h-3 rounded-full bg-[#FF5F56] border border-[#E0443E] shadow-sm flex items-center justify-center cursor-pointer">
+            <span className="opacity-0 group-hover:opacity-100 text-[8px] text-black font-bold leading-none select-none">✕</span>
+          </div>
+          <div className="w-3 h-3 rounded-full bg-[#FFBD2E] border border-[#DEA123] shadow-sm flex items-center justify-center cursor-pointer">
+            <span className="opacity-0 group-hover:opacity-100 text-[9px] text-black font-bold leading-none select-none">−</span>
+          </div>
+          <div className="w-3 h-3 rounded-full bg-[#27C93F] border border-[#1AAB29] shadow-sm flex items-center justify-center cursor-pointer">
+            <span className="opacity-0 group-hover:opacity-100 text-[8px] text-black font-bold leading-none select-none">+</span>
+          </div>
+        </div>
+
         {/* Case Switcher Glass Dropdown Button */}
         <div className="relative">
           <button
             onClick={() => setIsCaseMenuOpen(!isCaseMenuOpen)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.08] hover:border-white/[0.15] transition-all duration-150 active:scale-[0.97] cursor-pointer text-left shadow-apple-card"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.1] hover:border-white/[0.18] transition-all duration-120 active:scale-[0.97] cursor-pointer text-left shadow-apple-card"
           >
-            <div className="flex items-center justify-center p-1 rounded-lg bg-white/[0.06] border border-white/[0.08]">
+            <div className="flex items-center justify-center p-1 rounded-lg bg-white/[0.08] border border-white/[0.1]">
               {currentBadge.icon}
             </div>
 
-            <div className="max-w-[140px] sm:max-w-[190px] md:max-w-[240px] truncate">
-              <div className="text-xs font-semibold text-zinc-100 truncate leading-tight tracking-tight">
+            <div className="max-w-[130px] sm:max-w-[180px] md:max-w-[230px] truncate">
+              <div className="text-xs font-semibold text-white truncate leading-tight tracking-tight">
                 {activeCase?.title || 'Судебное дело'}
               </div>
-              <div className="text-[10px] text-zinc-400 truncate">
+              <div className="text-[10px] text-[#8E8E93] truncate">
                 {currentBadge.label} • {activeCase?.courtName}
               </div>
             </div>
 
-            <ChevronDown className="w-3.5 h-3.5 text-zinc-400 ml-0.5 flex-shrink-0" />
+            <ChevronDown className="w-3.5 h-3.5 text-[#8E8E93] ml-0.5 flex-shrink-0" />
           </button>
 
           {/* Cases Fast Switcher Dropdown (macOS Glass Sheet Style) */}
           {isCaseMenuOpen && (
-            <div className="absolute left-0 top-full mt-2 w-80 apple-glass-card rounded-2xl shadow-apple-modal py-2 z-50 animate-apple-scale-in max-h-96 overflow-y-auto">
-              <div className="px-3.5 py-1.5 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider border-b border-white/[0.06] flex items-center justify-between">
+            <div className="absolute left-0 top-full mt-2 w-84 apple-sheet-window py-2 z-50 animate-apple-spring-in max-h-96 overflow-y-auto">
+              <div className="px-4 py-2 text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider border-b border-white/[0.08] flex items-center justify-between">
                 <span>Портфель дел ({cases.length})</span>
                 <button
                   onClick={() => {
@@ -153,19 +166,19 @@ export const TopNavigation: React.FC = () => {
                         switchCase(c.id);
                         setIsCaseMenuOpen(false);
                       }}
-                      className={`w-full px-3.5 py-2 text-left flex items-center justify-between gap-2 transition-all cursor-pointer ${
+                      className={`w-full px-4 py-2.5 text-left flex items-center justify-between gap-2.5 transition-all cursor-pointer ${
                         isAct
-                          ? 'bg-[#0A84FF]/15 text-white font-medium border-l-2 border-[#0A84FF]'
-                          : 'text-zinc-300 hover:bg-white/[0.06] hover:text-white'
+                          ? 'bg-[#0A84FF]/20 text-white font-medium border-l-2 border-[#0A84FF]'
+                          : 'text-[#EBEBF5] hover:bg-white/[0.08] hover:text-white'
                       }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="p-1 rounded-lg bg-white/[0.06] flex-shrink-0">
+                        <div className="p-1 rounded-lg bg-white/[0.08] flex-shrink-0">
                           {b.icon}
                         </div>
                         <div className="min-w-0">
                           <div className="text-xs truncate">{c.title}</div>
-                          <div className="text-[10px] text-zinc-400 truncate font-mono">
+                          <div className="text-[10.5px] text-[#8E8E93] truncate font-mono">
                             {b.label}
                           </div>
                         </div>
@@ -177,13 +190,13 @@ export const TopNavigation: React.FC = () => {
                 })}
               </div>
 
-              <div className="px-2.5 pt-1.5 border-t border-white/[0.06] mt-1">
+              <div className="px-3 pt-2 border-t border-white/[0.08] mt-1">
                 <button
                   onClick={() => {
                     setIsCaseMenuOpen(false);
                     setNewCaseOpen(true);
                   }}
-                  className="w-full flex items-center justify-center gap-1.5 p-2 rounded-xl text-xs font-semibold apple-emerald-btn transition-all cursor-pointer"
+                  className="w-full flex items-center justify-center gap-1.5 p-2 rounded-xl text-xs font-semibold apple-btn-green transition-all cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Создать новое дело</span>
@@ -196,20 +209,20 @@ export const TopNavigation: React.FC = () => {
         {/* Portfolio Button */}
         <button
           onClick={() => setPortfolioOpen(true)}
-          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs text-zinc-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] rounded-xl transition-all active:scale-[0.97] cursor-pointer shadow-apple-card"
+          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#EBEBF5] hover:text-white apple-btn-secondary transition-all cursor-pointer shadow-apple-card"
           title="Открыть реестр дел всех инстанций"
         >
-          <FolderKanban className="w-3.5 h-3.5 text-sky-400" />
-          <span>Портфель дел</span>
+          <FolderKanban className="w-3.5 h-3.5 text-[#0A84FF]" />
+          <span>Портфель</span>
         </button>
       </div>
 
-      {/* Center Section: macOS Unified Toolbar Segmented Tools */}
-      <div className="hidden lg:flex items-center gap-1 p-1 bg-white/[0.04] border border-white/[0.08] rounded-2xl shadow-apple-card backdrop-blur-lg">
+      {/* Center: macOS Segmented Controls */}
+      <div className="hidden lg:flex items-center gap-1.5 p-1 apple-segmented-track">
         {/* Timeline Button */}
         <button
           onClick={() => setTimelineOpen(true)}
-          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-xl transition-all active:scale-[0.96] cursor-pointer"
+          className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-[#FFD60A] hover:text-white bg-[#FF9F0A]/15 hover:bg-[#FF9F0A]/25 border border-[#FF9F0A]/30 rounded-lg transition-all active:scale-[0.96] cursor-pointer"
           title="Открыть хронологию событий дела"
         >
           <Calendar className="w-3.5 h-3.5" />
@@ -219,42 +232,42 @@ export const TopNavigation: React.FC = () => {
         {/* Court Memorandum Button */}
         <button
           onClick={() => setCourtDocOpen(true)}
-          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-purple-300 hover:text-purple-200 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-xl transition-all active:scale-[0.96] cursor-pointer"
+          className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-[#E0B0FF] hover:text-white bg-[#BF5AF2]/15 hover:bg-[#BF5AF2]/25 border border-[#BF5AF2]/30 rounded-lg transition-all active:scale-[0.96] cursor-pointer"
           title="Сформировать судебный меморандум и реестр доказательств"
         >
           <FileText className="w-3.5 h-3.5" />
           <span>Позиция для суда</span>
         </button>
 
-        <div className="w-[1px] h-4 bg-white/[0.1] mx-0.5" />
+        <div className="w-[1px] h-4 bg-white/[0.15] mx-0.5" />
 
         {/* Filter Dropdown */}
         <div className="flex items-center gap-1 text-xs">
-          <Filter className="w-3 h-3 text-zinc-400 ml-1" />
+          <Filter className="w-3 h-3 text-[#8E8E93] ml-1" />
           <select
             value={filterNodeType}
             onChange={(e) => setFilterNodeType(e.target.value as LegalNodeType | 'all')}
-            className="bg-transparent text-zinc-200 hover:text-white text-xs outline-none py-1 px-1.5 rounded-lg cursor-pointer"
+            className="bg-transparent text-white text-xs outline-none py-1 px-1.5 rounded-lg cursor-pointer"
             title="Фильтр подсветки блоков на схеме"
           >
-            <option value="all" className="bg-[#1c1c1e] text-zinc-100">Все блоки</option>
-            <option value="thesis" className="bg-[#1c1c1e] text-zinc-100">Только Тезисы</option>
-            <option value="fact_timeline" className="bg-[#1c1c1e] text-zinc-100">Только Хронология</option>
-            <option value="norm" className="bg-[#1c1c1e] text-zinc-100">Только Нормы права</option>
-            <option value="evidence" className="bg-[#1c1c1e] text-zinc-100">Только Доказательства</option>
-            <option value="counter_arg" className="bg-[#1c1c1e] text-zinc-100">Только Оппонент</option>
-            <option value="risk" className="bg-[#1c1c1e] text-zinc-100">Только Риски</option>
+            <option value="all" className="bg-[#1c1c1e] text-white">Все блоки</option>
+            <option value="thesis" className="bg-[#1c1c1e] text-white">Только Тезисы</option>
+            <option value="fact_timeline" className="bg-[#1c1c1e] text-white">Только Хронология</option>
+            <option value="norm" className="bg-[#1c1c1e] text-white">Только Нормы права</option>
+            <option value="evidence" className="bg-[#1c1c1e] text-white">Только Доказательства</option>
+            <option value="counter_arg" className="bg-[#1c1c1e] text-white">Только Оппонент</option>
+            <option value="risk" className="bg-[#1c1c1e] text-white">Только Риски</option>
           </select>
         </div>
 
-        <div className="w-[1px] h-4 bg-white/[0.1] mx-0.5" />
+        <div className="w-[1px] h-4 bg-white/[0.15] mx-0.5" />
 
         {/* Undo */}
         <button
           onClick={undo}
           disabled={!canUndo()}
-          title="Отменить действие (Ctrl+Z)"
-          className="p-1.5 text-zinc-300 hover:text-white hover:bg-white/[0.08] disabled:opacity-30 disabled:hover:bg-transparent rounded-lg transition-all active:scale-[0.92] cursor-pointer"
+          title="Отменить действие (⌘Z)"
+          className="p-1.5 text-[#8E8E93] hover:text-white hover:bg-white/[0.1] disabled:opacity-30 disabled:hover:bg-transparent rounded-lg transition-all active:scale-[0.92] cursor-pointer"
         >
           <Undo2 className="w-3.5 h-3.5" />
         </button>
@@ -263,13 +276,13 @@ export const TopNavigation: React.FC = () => {
         <button
           onClick={redo}
           disabled={!canRedo()}
-          title="Повторить действие (Ctrl+Shift+Z)"
-          className="p-1.5 text-zinc-300 hover:text-white hover:bg-white/[0.08] disabled:opacity-30 disabled:hover:bg-transparent rounded-lg transition-all active:scale-[0.92] cursor-pointer"
+          title="Повторить действие (⌘⇧Z)"
+          className="p-1.5 text-[#8E8E93] hover:text-white hover:bg-white/[0.1] disabled:opacity-30 disabled:hover:bg-transparent rounded-lg transition-all active:scale-[0.92] cursor-pointer"
         >
           <Redo2 className="w-3.5 h-3.5" />
         </button>
 
-        <div className="w-[1px] h-4 bg-white/[0.1] mx-0.5" />
+        <div className="w-[1px] h-4 bg-white/[0.15] mx-0.5" />
 
         {/* Quick Add with menu */}
         <div className="relative">
@@ -277,14 +290,14 @@ export const TopNavigation: React.FC = () => {
             <button
               onClick={() => addChildNode(selectedId || root.id)}
               title="Добавить дочерний элемент (Tab)"
-              className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-emerald-300 hover:text-emerald-200 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 rounded-l-xl transition-all active:scale-[0.96] cursor-pointer"
+              className="flex items-center gap-1 px-3 py-1 text-xs font-semibold text-white bg-[#0A84FF] hover:bg-[#2491FF] border border-[#0A84FF] rounded-l-lg transition-all active:scale-[0.96] cursor-pointer shadow-sm"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Блок</span>
             </button>
             <button
               onClick={() => setIsAddMenuOpen(!isAddMenuOpen)}
-              className="p-1 bg-emerald-500/15 hover:bg-emerald-500/25 border-y border-r border-emerald-500/30 rounded-r-xl text-emerald-300 transition-all cursor-pointer"
+              className="p-1 bg-[#0A84FF] hover:bg-[#2491FF] border-y border-r border-[#0A84FF] rounded-r-lg text-white transition-all cursor-pointer"
               title="Выбрать категорию блока"
             >
               <ChevronDown className="w-3.5 h-3.5" />
@@ -295,48 +308,48 @@ export const TopNavigation: React.FC = () => {
           {isAddMenuOpen && (
             <div
               onClick={() => setIsAddMenuOpen(false)}
-              className="absolute left-0 top-full mt-2 w-52 apple-glass-card rounded-2xl shadow-apple-modal py-1.5 z-50 animate-apple-scale-in"
+              className="absolute left-0 top-full mt-2 w-56 apple-sheet-window py-2 z-50 animate-apple-spring-in"
             >
               <button
                 onClick={() => handleAddWithType('thesis', 'Новый тезис')}
-                className="w-full px-3 py-2 text-left text-xs text-zinc-200 hover:bg-white/[0.08] flex items-center gap-2 cursor-pointer transition-colors"
+                className="w-full px-3.5 py-2 text-left text-xs text-[#EBEBF5] hover:bg-white/[0.1] hover:text-white flex items-center gap-2 cursor-pointer transition-colors"
               >
-                <span className="w-2 h-2 rounded-full bg-purple-400" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#BF5AF2]" />
                 <span>+ Тезис / Позиция</span>
               </button>
               <button
                 onClick={() => handleAddWithType('fact_timeline', 'Новый факт фабулы')}
-                className="w-full px-3 py-2 text-left text-xs text-zinc-200 hover:bg-white/[0.08] flex items-center gap-2 cursor-pointer transition-colors"
+                className="w-full px-3.5 py-2 text-left text-xs text-[#EBEBF5] hover:bg-white/[0.1] hover:text-white flex items-center gap-2 cursor-pointer transition-colors"
               >
-                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#FF9F0A]" />
                 <span>+ Факт / Хронология</span>
               </button>
               <button
                 onClick={() => handleAddWithType('norm', 'Новая статья закона')}
-                className="w-full px-3 py-2 text-left text-xs text-zinc-200 hover:bg-white/[0.08] flex items-center gap-2 cursor-pointer transition-colors"
+                className="w-full px-3.5 py-2 text-left text-xs text-[#EBEBF5] hover:bg-white/[0.1] hover:text-white flex items-center gap-2 cursor-pointer transition-colors"
               >
-                <span className="w-2 h-2 rounded-full bg-sky-400" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#0A84FF]" />
                 <span>+ Норма права / Статья</span>
               </button>
               <button
                 onClick={() => handleAddWithType('evidence', 'Новое доказательство')}
-                className="w-full px-3 py-2 text-left text-xs text-zinc-200 hover:bg-white/[0.08] flex items-center gap-2 cursor-pointer transition-colors"
+                className="w-full px-3.5 py-2 text-left text-xs text-[#EBEBF5] hover:bg-white/[0.1] hover:text-white flex items-center gap-2 cursor-pointer transition-colors"
               >
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#30D158]" />
                 <span>+ Доказательство</span>
               </button>
               <button
                 onClick={() => handleAddWithType('counter_arg', 'Довод оппонента')}
-                className="w-full px-3 py-2 text-left text-xs text-zinc-200 hover:bg-white/[0.08] flex items-center gap-2 cursor-pointer transition-colors"
+                className="w-full px-3.5 py-2 text-left text-xs text-[#EBEBF5] hover:bg-white/[0.1] hover:text-white flex items-center gap-2 cursor-pointer transition-colors"
               >
-                <span className="w-2 h-2 rounded-full bg-orange-400" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#FF9F0A]" />
                 <span>+ Довод оппонента</span>
               </button>
               <button
                 onClick={() => handleAddWithType('risk', 'Новый риск')}
-                className="w-full px-3 py-2 text-left text-xs text-zinc-200 hover:bg-white/[0.08] flex items-center gap-2 cursor-pointer transition-colors"
+                className="w-full px-3.5 py-2 text-left text-xs text-[#EBEBF5] hover:bg-white/[0.1] hover:text-white flex items-center gap-2 cursor-pointer transition-colors"
               >
-                <span className="w-2 h-2 rounded-full bg-rose-400" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#FF453A]" />
                 <span>+ Риск / Уязвимость</span>
               </button>
             </div>
@@ -347,38 +360,38 @@ export const TopNavigation: React.FC = () => {
         <button
           onClick={() => addSiblingNode(selectedId || root.id)}
           title="Добавить соседний блок (Enter)"
-          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-zinc-300 hover:text-white hover:bg-white/[0.08] rounded-xl transition-all active:scale-[0.96] cursor-pointer"
+          className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-[#EBEBF5] hover:text-white hover:bg-white/[0.1] rounded-lg transition-all active:scale-[0.96] cursor-pointer"
         >
           <GitBranch className="w-3.5 h-3.5" />
-          <span>Соседний блок</span>
+          <span>Ветка</span>
         </button>
       </div>
 
-      {/* Right Section: Share, Search, Export, Help, Inspector */}
+      {/* Right: Apple Primary Share, Spotlight Search, Export, Help, Inspector */}
       <div className="flex items-center gap-2">
         {/* Apple Primary Share Button */}
         <button
           onClick={() => setShareOpen(true)}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold apple-emerald-btn rounded-xl transition-all active:scale-[0.96] cursor-pointer"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold apple-btn-green transition-all active:scale-[0.96] cursor-pointer"
           title="Поделиться картой дела (скопировать ссылку)"
         >
           <Share2 className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Поделиться</span>
         </button>
 
-        {/* Search button */}
+        {/* Search button (Apple Spotlight Trigger) */}
         <button
           onClick={() => setSearchOpen(true)}
-          className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] rounded-xl transition-all active:scale-[0.96] cursor-pointer shadow-apple-card"
+          className="flex items-center gap-2 px-3 py-1.5 text-xs text-[#8E8E93] hover:text-white apple-btn-secondary transition-all active:scale-[0.96] cursor-pointer shadow-apple-card"
         >
-          <Search className="w-3.5 h-3.5" />
+          <Search className="w-3.5 h-3.5 text-[#0A84FF]" />
           <Kbd className="hidden sm:inline-flex">⌘F</Kbd>
         </button>
 
         {/* Export / Import button */}
         <button
           onClick={() => setExportImportOpen(true)}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-zinc-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] rounded-xl transition-all active:scale-[0.96] cursor-pointer shadow-apple-card"
+          className="p-2 text-[#EBEBF5] hover:text-white apple-btn-secondary transition-all active:scale-[0.96] cursor-pointer shadow-apple-card"
           title="Экспорт (PNG, SVG, JSON, Markdown)"
         >
           <Download className="w-3.5 h-3.5" />
@@ -387,7 +400,7 @@ export const TopNavigation: React.FC = () => {
         {/* Shortcuts Cheat Sheet */}
         <button
           onClick={() => setShortcutsOpen(true)}
-          className="p-1.5 text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.08] rounded-xl transition-all active:scale-[0.94] cursor-pointer"
+          className="p-2 text-[#8E8E93] hover:text-white hover:bg-white/[0.1] rounded-xl transition-all active:scale-[0.94] cursor-pointer"
           title="Справочник горячих клавиш (?)"
         >
           <HelpCircle className="w-4 h-4" />
@@ -396,12 +409,12 @@ export const TopNavigation: React.FC = () => {
         {/* Sidebar Inspector Toggle */}
         <button
           onClick={toggleSidebar}
-          className={`p-1.5 rounded-xl border transition-all active:scale-[0.94] cursor-pointer ${
+          className={`p-2 rounded-xl transition-all active:scale-[0.94] cursor-pointer ${
             isSidebarOpen
-              ? 'bg-[#0A84FF]/20 text-[#0A84FF] border-[#0A84FF]/40 shadow-sm'
-              : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.08] border-transparent'
+              ? 'bg-[#0A84FF]/25 text-[#0A84FF] border border-[#0A84FF]/50 shadow-sm'
+              : 'text-[#8E8E93] hover:text-white hover:bg-white/[0.1] border border-transparent'
           }`}
-          title="Открыть/скрыть инспектор юридического блока (Cmd+B)"
+          title="Открыть/скрыть инспектор юридического блока (⌘B)"
         >
           <PanelRight className="w-4 h-4" />
         </button>
