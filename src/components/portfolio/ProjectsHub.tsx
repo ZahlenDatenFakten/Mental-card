@@ -7,7 +7,10 @@ import {
   Search,
   ArrowRight,
   Sparkles,
-  Compass,
+  BookOpen,
+  Briefcase,
+  Users,
+  FileCode,
 } from 'lucide-react';
 import { useMindMapStore } from '../../store/useMindMapStore';
 import { JudicialInstance, CaseItem } from '../../types/mindmap';
@@ -68,12 +71,25 @@ export const ProjectsHub: React.FC = () => {
     promoteToNextInstance(c.id, targetInst);
   };
 
+  const getTemplateIcon = (id: string) => {
+    switch (id) {
+      case 'arbitration-supply':
+        return <BookOpen className="w-5 h-5 text-[#0A84FF]" />;
+      case 'corporate-dispute':
+        return <Users className="w-5 h-5 text-[#BF5AF2]" />;
+      case 'labor-dispute':
+        return <Briefcase className="w-5 h-5 text-[#FF9F0A]" />;
+      default:
+        return <FileCode className="w-5 h-5 text-[#30D158]" />;
+    }
+  };
+
   return (
     <div className="w-full h-screen overflow-y-auto bg-black text-[#F5F5F7] select-none flex flex-col antialiased">
       {/* Top Glass Navbar */}
-      <header className="sticky top-0 z-40 h-16 px-6 sm:px-12 apple-vibrant-bar flex items-center justify-between">
+      <header className="sticky top-0 z-40 h-16 px-6 sm:px-12 apple-vibrant-bar flex items-center justify-between border-b border-zinc-800/80">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-[#0A84FF]/20 border border-[#0A84FF]/40 text-[#0A84FF] shadow-sm">
+          <div className="p-2.5 rounded-2xl bg-[#0A84FF]/15 border border-[#0A84FF]/30 text-[#0A84FF] shadow-sm">
             <Scale className="w-5 h-5" />
           </div>
           <div>
@@ -100,15 +116,15 @@ export const ProjectsHub: React.FC = () => {
       {/* Main Hero & Projects Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-6 sm:px-10 py-8 space-y-10">
         {/* 3D Interactive Spatial Legal Graph Showcase */}
-        <section className="relative overflow-hidden rounded-3xl p-8 sm:p-12 border border-white/[0.14] shadow-[0_24px_64px_rgba(0,0,0,0.85)] bg-gradient-to-b from-[#161619] via-[#0d0d10] to-black">
+        <section className="relative overflow-hidden rounded-3xl p-8 sm:p-12 border border-zinc-800/80 shadow-2xl bg-gradient-to-b from-[#141417] via-[#0d0d10] to-black">
           {/* Ambient Lighting orbs */}
-          <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-[#0A84FF]/20 blur-[100px] pointer-events-none" />
-          <div className="absolute top-1/2 -right-24 w-96 h-96 rounded-full bg-[#BF5AF2]/20 blur-[100px] pointer-events-none" />
+          <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-[#0A84FF]/15 blur-[100px] pointer-events-none" />
+          <div className="absolute top-1/2 -right-24 w-96 h-96 rounded-full bg-[#BF5AF2]/15 blur-[100px] pointer-events-none" />
 
           <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             {/* Left Hero Pitch */}
             <div className="lg:col-span-7 space-y-5">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.08] border border-white/[0.14] text-xs font-mono text-[#EBEBF5] backdrop-blur-md shadow-sm">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-xs font-mono text-[#EBEBF5] backdrop-blur-md shadow-sm">
                 <Sparkles className="w-3.5 h-3.5 text-[#0A84FF]" />
                 <span>3D СУДЕБНЫЙ СИМУЛЯТОР & СТРАТЕГИЯ ДЕЛА</span>
               </div>
@@ -123,21 +139,17 @@ export const ProjectsHub: React.FC = () => {
 
               {/* Quick Feature Pills */}
               <div className="flex items-center gap-2 flex-wrap pt-1">
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] border border-white/[0.1] text-xs text-[#EBEBF5]">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-zinc-800 text-xs text-[#EBEBF5]">
                   <Building2 className="w-3.5 h-3.5 text-[#0A84FF]" />
                   <span>1. Окружная</span>
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] border border-white/[0.1] text-xs text-[#EBEBF5]">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-zinc-800 text-xs text-[#EBEBF5]">
                   <Scale className="w-3.5 h-3.5 text-[#BF5AF2]" />
                   <span>2. Апелляционная</span>
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] border border-white/[0.1] text-xs text-[#EBEBF5]">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-zinc-800 text-xs text-[#EBEBF5]">
                   <Crown className="w-3.5 h-3.5 text-[#30D158]" />
                   <span>3. Верховная</span>
-                </div>
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] border border-white/[0.1] text-xs text-[#EBEBF5]">
-                  <Compass className="w-3.5 h-3.5 text-[#FF9F0A]" />
-                  <span>1:1 Свободное перемещение</span>
                 </div>
               </div>
 
@@ -164,9 +176,9 @@ export const ProjectsHub: React.FC = () => {
             {/* Right Interactive 3D Canvas */}
             <div className="lg:col-span-5 relative">
               <Hero3DCanvas />
-              <div className="text-center mt-2">
+              <div className="text-center mt-2.5">
                 <span className="text-[11px] font-mono text-[#8E8E93]">
-                  ✦ Интерактивная 3D модель связей: двигайте курсор для вращения
+                  ✦ Интерактивная 3D модель: наведите курсор для вращения в пространстве
                 </span>
               </div>
             </div>
@@ -175,7 +187,7 @@ export const ProjectsHub: React.FC = () => {
 
         {/* Portfolio Cases Header & Segmented Filter */}
         <section className="space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-white/[0.08]">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-zinc-800/80">
             {/* Segmented Instance Navigation (Exact 3 Hierarchy Levels) */}
             <div className="flex items-center gap-1.5 p-1.5 apple-segmented-track overflow-x-auto max-w-full">
               <button
@@ -234,19 +246,19 @@ export const ProjectsHub: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Поиск по делам, судам, судьям..."
-                className="w-full bg-black/50 border border-white/[0.12] focus:border-[#0A84FF] focus:ring-2 focus:ring-[#0A84FF]/25 text-white pl-10 pr-3.5 py-2.5 rounded-2xl text-xs outline-none transition-all font-sans"
+                className="w-full bg-black/50 border border-zinc-800 focus:border-[#0A84FF] focus:ring-2 focus:ring-[#0A84FF]/25 text-white pl-10 pr-3.5 py-2.5 rounded-2xl text-xs outline-none transition-all font-sans"
               />
             </div>
           </div>
 
           {/* Cases 3D Tilt Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Create Case Special Hero Card */}
+            {/* Create Case Clean Apple Card */}
             <div
               onClick={() => setNewCaseOpen(true)}
-              className="p-8 rounded-3xl border-2 border-dashed border-white/[0.16] hover:border-[#0A84FF]/80 bg-gradient-to-b from-white/[0.03] to-white/[0.01] hover:bg-white/[0.06] transition-all duration-200 flex flex-col items-center justify-center text-center group cursor-pointer min-h-[260px] shadow-apple-card hover:shadow-[0_16px_40px_rgba(10,132,255,0.2)] active:scale-[0.98]"
+              className="p-8 rounded-3xl border border-zinc-800/90 hover:border-[#0A84FF]/60 bg-[#141416] hover:bg-[#1a1a1e] transition-all duration-200 flex flex-col items-center justify-center text-center group cursor-pointer min-h-[260px] shadow-lg active:scale-[0.98]"
             >
-              <div className="w-14 h-14 rounded-2xl bg-white/[0.08] group-hover:bg-[#0A84FF] text-[#8E8E93] group-hover:text-white border border-white/[0.12] group-hover:border-[#0A84FF] flex items-center justify-center mb-4 transition-all duration-200 group-hover:scale-110 shadow-sm">
+              <div className="w-14 h-14 rounded-2xl bg-white/[0.06] group-hover:bg-[#0A84FF] text-[#8E8E93] group-hover:text-white border border-white/[0.08] group-hover:border-[#0A84FF] flex items-center justify-center mb-4 transition-all duration-200 group-hover:scale-110 shadow-sm">
                 <Plus className="w-7 h-7" />
               </div>
               <h3 className="text-base font-bold text-white group-hover:text-[#0A84FF] transition-colors">
@@ -274,7 +286,7 @@ export const ProjectsHub: React.FC = () => {
         </section>
 
         {/* Starter Legal Templates Gallery (Apple Pages/Keynote Style) */}
-        <section className="pt-8 border-t border-white/[0.08] space-y-4">
+        <section className="pt-8 border-t border-zinc-800/80 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-bold text-white tracking-tight">
@@ -291,14 +303,16 @@ export const ProjectsHub: React.FC = () => {
               <div
                 key={tmpl.id}
                 onClick={() => loadTemplate(tmpl.id)}
-                className="p-5 apple-card hover:border-[#0A84FF]/60 hover:shadow-[0_12px_32px_rgba(10,132,255,0.18)] transition-all duration-150 flex flex-col justify-between group cursor-pointer active:scale-[0.98]"
+                className="p-5 bg-[#141417] hover:bg-[#1c1c20] border border-zinc-800 hover:border-[#0A84FF]/60 rounded-2xl transition-all duration-150 flex flex-col justify-between group cursor-pointer active:scale-[0.98] shadow-md"
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono font-medium text-[#8E8E93] bg-white/[0.06] px-2.5 py-0.5 rounded-lg border border-white/[0.08]">
+                    <span className="text-[11px] font-mono font-medium text-[#8E8E93] bg-white/[0.05] px-2.5 py-0.5 rounded-lg border border-zinc-800">
                       {tmpl.category}
                     </span>
-                    <Sparkles className="w-4 h-4 text-[#0A84FF] group-hover:scale-110 transition-transform" />
+                    <div className="p-1 rounded-lg bg-white/[0.04]">
+                      {getTemplateIcon(tmpl.id)}
+                    </div>
                   </div>
 
                   <h3 className="text-sm font-bold text-white group-hover:text-[#0A84FF] transition-colors">
@@ -310,7 +324,7 @@ export const ProjectsHub: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between text-xs text-[#0A84FF] font-semibold">
+                <div className="mt-4 pt-3 border-t border-zinc-800/80 flex items-center justify-between text-xs text-[#0A84FF] font-semibold">
                   <span>Создать производство</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </div>
