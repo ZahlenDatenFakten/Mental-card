@@ -1,7 +1,9 @@
 import React from 'react';
+import { useMindMapStore } from './store/useMindMapStore';
 import { TopNavigation } from './components/panels/TopNavigation';
 import { MindMapCanvas } from './components/canvas/MindMapCanvas';
 import { NodeDetailsPanel } from './components/panels/NodeDetailsPanel';
+import { ProjectsHub } from './components/portfolio/ProjectsHub';
 import { SearchModal } from './components/panels/SearchModal';
 import { ExportImportModal } from './components/panels/ExportImportModal';
 import { ShortcutsDialog } from './components/panels/ShortcutsDialog';
@@ -15,18 +17,27 @@ import { ToastContainer } from './components/ui/ToastContainer';
 import { ConfirmDialog } from './components/ui/ConfirmDialog';
 
 export const App: React.FC = () => {
-  return (
-    <div className="relative w-screen h-screen overflow-hidden bg-background font-sans text-zinc-100 flex flex-col antialiased">
-      {/* Top Judicial Header & Navigation Controls */}
-      <TopNavigation />
+  const { currentView } = useMindMapStore();
 
-      {/* Main Legal Mind Map Workspace (Canvas + Integrated Right Sidebar) */}
-      <div className="flex-1 w-full h-[calc(100vh-3.5rem)] relative overflow-hidden flex">
-        <main className="flex-1 h-full relative overflow-hidden">
-          <MindMapCanvas />
-        </main>
-        <NodeDetailsPanel />
-      </div>
+  return (
+    <div className="relative w-screen h-screen overflow-hidden bg-black font-sans text-[#F5F5F7] flex flex-col antialiased">
+      {/* Dynamic View: Projects Hub (Start Screen) vs. Working Workspace */}
+      {currentView === 'portfolio' ? (
+        <ProjectsHub />
+      ) : (
+        <>
+          {/* Top Judicial Header & Navigation Controls */}
+          <TopNavigation />
+
+          {/* Main Legal Mind Map Workspace (Canvas + Integrated Right Sidebar) */}
+          <div className="flex-1 w-full h-[calc(100vh-3.25rem)] relative overflow-hidden flex pt-13">
+            <main className="flex-1 h-full relative overflow-hidden">
+              <MindMapCanvas />
+            </main>
+            <NodeDetailsPanel />
+          </div>
+        </>
+      )}
 
       {/* Quick Search & Command Palette Modal (Cmd+F) */}
       <SearchModal />

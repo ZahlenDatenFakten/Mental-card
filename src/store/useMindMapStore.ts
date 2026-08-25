@@ -16,8 +16,13 @@ import { resetTreeLayoutCoordinates, calculateTreeLayout } from '../lib/tree-lay
 
 const STORAGE_CASES_KEY = 'legal_mindmap_cases_v3';
 const STORAGE_ACTIVE_KEY = 'legal_mindmap_active_case_id_v3';
+const STORAGE_VIEW_KEY = 'legal_mindmap_current_view_v3';
 
 interface MindMapState {
+  // Navigation view: 'portfolio' (start page) | 'workspace' (mind map canvas)
+  currentView: 'portfolio' | 'workspace';
+  setCurrentView: (view: 'portfolio' | 'workspace') => void;
+
   // Multi-case portfolio state
   cases: CaseItem[];
   activeCaseId: string;
@@ -122,7 +127,7 @@ const caseUid = () => `case-${Date.now()}-${Math.random().toString(36).substr(2,
 const toastUid = () => `toast-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
 
 // Load initial cases from storage or default
-function getInitialCases(): { cases: CaseItem[]; activeId: string; root: MindNode } {
+function getInitialCases(): { cases: CaseItem[]; activeId: string; root: MindNode; initialView: 'portfolio' | 'workspace' } {
   // Check if URL has a shared case
   const sharedCase = loadSharedCaseFromUrl();
   if (sharedCase) {
@@ -140,6 +145,7 @@ function getInitialCases(): { cases: CaseItem[]; activeId: string; root: MindNod
       cases: [newCase, ...INITIAL_CASES],
       activeId: newCase.id,
       root: sharedCase,
+      initialView: 'workspace',
     };
   }
 
@@ -154,6 +160,7 @@ function getInitialCases(): { cases: CaseItem[]; activeId: string; root: MindNod
           cases: parsed,
           activeId: found.id,
           root: found.root,
+          initialView: 'portfolio', // Start on project selection page as requested
         };
       }
     }
@@ -165,6 +172,7 @@ function getInitialCases(): { cases: CaseItem[]; activeId: string; root: MindNod
     cases: INITIAL_CASES,
     activeId: INITIAL_CASES[0].id,
     root: INITIAL_CASES[0].root,
+    initialView: 'portfolio', // Start on project selection page
   };
 }
 
@@ -264,6 +272,7 @@ function saveCasesToStorage(cases: CaseItem[], activeId: string) {
 }
 
 export const useMindMapStore = create<MindMapState>((set, get) => ({
+  currentView: initialData.initialView,
   cases: initialData.cases,
   activeCaseId: initialData.activeId,
   root: initialData.root,
@@ -290,6 +299,15 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
     title: '',
     message: '',
     onConfirm: () => {},
+  },
+
+  setCurrentView: (view) => {
+    try {
+      localStorage.setItem(STORAGE_VIEW_KEY, view);
+    } catch {
+      // ignore
+    }
+    set({ currentView: view });
   },
 
   setFilterNodeType: (filterNodeType) => set({ filterNodeType }),
@@ -355,6 +373,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
       editingId: null,
       history: [baseRoot],
       historyIndex: 0,
+      currentView: 'workspace', // Jump directly into workspace upon creation
     });
 
     get().addToast({
@@ -377,6 +396,8 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
       editingId: null,
       history: [found.root],
       historyIndex: 0,
+      currentView: 'workspace', // Jump into workspace
+      isPortfolioOpen: false,
     });
 
     get().addToast({
@@ -512,6 +533,8 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
       selectedId: clonedRoot.id,
       history: [clonedRoot],
       historyIndex: 0,
+      currentView: 'workspace',
+      isPortfolioOpen: false,
     });
 
     get().addToast({
@@ -671,11 +694,9 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
     const nodeToMove = findNode(get().root, draggedId);
     if (!nodeToMove) return;
 
-    // Remove from old position
     const treeWithoutNode = deleteFromTree(get().root, draggedId);
     if (!treeWithoutNode) return;
 
-    // Add to target parent
     const newRoot = addChildInTree(treeWithoutNode, targetParentId, nodeToMove);
     (get() as any)._pushHistory(newRoot);
     set({ selectedId: draggedId });
@@ -721,7 +742,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
     if (template) {
       const cloned = cloneTree(template.data);
       (get() as any)._pushHistory(cloned);
-      set({ selectedId: cloned.id });
+      set({ selectedId: cloned.id, currentView: 'workspace' });
       get().setTemplatesOpen(false);
       get().addToast({
         type: 'success',
@@ -735,7 +756,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
     try {
       const parsed = parseMarkdownToTree(markdown);
       (get() as any)._pushHistory(parsed);
-      set({ selectedId: parsed.id });
+      set({ selectedId: parsed.id, currentView: 'workspace' });
       get().setExportImportOpen(false);
       get().addToast({
         type: 'success',
@@ -756,7 +777,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
       const parsed = JSON.parse(jsonStr);
       if (parsed && parsed.id && parsed.title) {
         (get() as any)._pushHistory(parsed);
-        set({ selectedId: parsed.id });
+        set({ selectedId: parsed.id, currentView: 'workspace' });
         get().setExportImportOpen(false);
         get().addToast({
           type: 'success',
@@ -778,7 +799,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
 
   resetToDefault: () => {
     (get() as any)._pushHistory(INITIAL_MIND_MAP);
-    set({ selectedId: INITIAL_MIND_MAP.id });
+    set({ selectedId: INITIAL_MIND_MAP.id, currentView: 'workspace' });
     get().addToast({
       type: 'info',
       title: 'Схема сброшена',

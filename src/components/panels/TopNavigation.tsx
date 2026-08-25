@@ -16,8 +16,8 @@ import {
   Building2,
   Scale,
   Crown,
-  FolderKanban,
   Check,
+  ArrowLeft,
 } from 'lucide-react';
 import { useMindMapStore } from '../../store/useMindMapStore';
 import { Kbd } from '../ui/Kbd';
@@ -30,6 +30,7 @@ export const TopNavigation: React.FC = () => {
     cases,
     activeCaseId,
     switchCase,
+    setCurrentView,
     addChildNode,
     addSiblingNode,
     undo,
@@ -44,7 +45,6 @@ export const TopNavigation: React.FC = () => {
     setTimelineOpen,
     setCourtDocOpen,
     setShareOpen,
-    setPortfolioOpen,
     setNewCaseOpen,
     filterNodeType,
     setFilterNodeType,
@@ -102,20 +102,17 @@ export const TopNavigation: React.FC = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 h-13 px-3.5 apple-vibrant-bar flex items-center justify-between select-none text-[#F5F5F7]">
-      {/* Left: macOS Traffic Lights & Case Switcher */}
-      <div className="flex items-center gap-3.5" ref={caseMenuRef}>
-        {/* Authentic macOS Window Controls (Traffic Lights) */}
-        <div className="hidden sm:flex items-center gap-2 group mr-1">
-          <div className="w-3 h-3 rounded-full bg-[#FF5F56] border border-[#E0443E] shadow-sm flex items-center justify-center cursor-pointer">
-            <span className="opacity-0 group-hover:opacity-100 text-[8px] text-black font-bold leading-none select-none">✕</span>
-          </div>
-          <div className="w-3 h-3 rounded-full bg-[#FFBD2E] border border-[#DEA123] shadow-sm flex items-center justify-center cursor-pointer">
-            <span className="opacity-0 group-hover:opacity-100 text-[9px] text-black font-bold leading-none select-none">−</span>
-          </div>
-          <div className="w-3 h-3 rounded-full bg-[#27C93F] border border-[#1AAB29] shadow-sm flex items-center justify-center cursor-pointer">
-            <span className="opacity-0 group-hover:opacity-100 text-[8px] text-black font-bold leading-none select-none">+</span>
-          </div>
-        </div>
+      {/* Left: Back to Portfolio & Case Selector */}
+      <div className="flex items-center gap-2.5" ref={caseMenuRef}>
+        {/* Back to All Projects / Portfolio Button */}
+        <button
+          onClick={() => setCurrentView('portfolio')}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#EBEBF5] hover:text-white apple-btn-secondary transition-all active:scale-[0.95] cursor-pointer shadow-apple-card"
+          title="Вернуться на страницу выбора дел и портфеля"
+        >
+          <ArrowLeft className="w-3.5 h-3.5 text-[#0A84FF]" />
+          <span className="font-semibold">Все дела</span>
+        </button>
 
         {/* Case Switcher Glass Dropdown Button */}
         <div className="relative">
@@ -127,7 +124,7 @@ export const TopNavigation: React.FC = () => {
               {currentBadge.icon}
             </div>
 
-            <div className="max-w-[130px] sm:max-w-[180px] md:max-w-[230px] truncate">
+            <div className="max-w-[120px] sm:max-w-[180px] md:max-w-[220px] truncate">
               <div className="text-xs font-semibold text-white truncate leading-tight tracking-tight">
                 {activeCase?.title || 'Судебное дело'}
               </div>
@@ -147,7 +144,7 @@ export const TopNavigation: React.FC = () => {
                 <button
                   onClick={() => {
                     setIsCaseMenuOpen(false);
-                    setPortfolioOpen(true);
+                    setCurrentView('portfolio');
                   }}
                   className="text-[#0A84FF] hover:underline cursor-pointer font-medium"
                 >
@@ -205,16 +202,6 @@ export const TopNavigation: React.FC = () => {
             </div>
           )}
         </div>
-
-        {/* Portfolio Button */}
-        <button
-          onClick={() => setPortfolioOpen(true)}
-          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#EBEBF5] hover:text-white apple-btn-secondary transition-all cursor-pointer shadow-apple-card"
-          title="Открыть реестр дел всех инстанций"
-        >
-          <FolderKanban className="w-3.5 h-3.5 text-[#0A84FF]" />
-          <span>Портфель</span>
-        </button>
       </div>
 
       {/* Center: macOS Segmented Controls */}
