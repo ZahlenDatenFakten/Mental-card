@@ -9,11 +9,11 @@ import {
 } from '../types/mindmap';
 import { generateBezierPath, getBranchColor } from './bezier';
 
-export const HORIZONTAL_GAP = 72; // Horizontal distance between levels
-export const VERTICAL_GAP = 18;   // Vertical distance between sibling subtrees
+export const HORIZONTAL_GAP = 76; // Horizontal distance between levels
+export const VERTICAL_GAP = 20;   // Vertical distance between sibling subtrees
 
 /**
- * Estimates node dimensions based on text length, metadata badges, and hierarchy depth.
+ * Estimates node dimensions based on text length, legal badges, and hierarchy depth.
  */
 export function estimateNodeDimensions(node: MindNode, depth: number): { width: number; height: number } {
   const isRoot = depth === 0;
@@ -21,23 +21,27 @@ export function estimateNodeDimensions(node: MindNode, depth: number): { width: 
 
   // Approximate character width in pixels
   const charWidth = isRoot ? 9.5 : isL1 ? 8.5 : 8.0;
-  const basePadding = isRoot ? 48 : isL1 ? 40 : 36;
+  const basePadding = isRoot ? 54 : isL1 ? 44 : 40;
   
   // Calculate text width
   const textLength = node.title ? node.title.length : 10;
-  let estimatedWidth = Math.max(isRoot ? 140 : isL1 ? 110 : 90, textLength * charWidth + basePadding);
+  let estimatedWidth = Math.max(isRoot ? 160 : isL1 ? 130 : 100, textLength * charWidth + basePadding);
 
-  // Extra width for badges
+  // Extra width for legal badges
+  if (node.nodeType && node.nodeType !== 'general') estimatedWidth += 28;
+  if (node.lawArticle) estimatedWidth += Math.min(node.lawArticle.length * 6.5, 90);
+  if (node.eventDate) estimatedWidth += 70;
+  if (node.casePages || node.caseVolume) estimatedWidth += 55;
   if (node.notes) estimatedWidth += 22;
   if (node.url) estimatedWidth += 22;
   if (node.priority) estimatedWidth += 24;
   if (node.tags && node.tags.length > 0) estimatedWidth += node.tags.length * 28;
-  if (node.children && node.children.length > 0) estimatedWidth += 26; // expand/collapse toggle pill
+  if (node.children && node.children.length > 0) estimatedWidth += 26; // collapse toggle pill
 
-  // Cap max node width for very long text
-  estimatedWidth = Math.min(estimatedWidth, 340);
+  // Cap max node width
+  estimatedWidth = Math.min(estimatedWidth, 420);
 
-  const estimatedHeight = isRoot ? 46 : isL1 ? 38 : 34;
+  const estimatedHeight = isRoot ? 48 : isL1 ? 40 : 36;
 
   return {
     width: Math.round(estimatedWidth),
@@ -93,6 +97,17 @@ function computeSubtreeHeights(
       url: node.url,
       priority: node.priority,
       tags: node.tags,
+      nodeType: node.nodeType || 'general',
+      lawArticle: node.lawArticle,
+      caseVolume: node.caseVolume,
+      casePages: node.casePages,
+      evidenceStatus: node.evidenceStatus,
+      evidenceType: node.evidenceType,
+      eventDate: node.eventDate,
+      eventTime: node.eventTime,
+      strengthScore: node.strengthScore,
+      opponentStance: node.opponentStance,
+      citation: node.citation,
       children: [],
       parentId,
       isRoot,
@@ -105,7 +120,6 @@ function computeSubtreeHeights(
   let childrenTotalHeight = 0;
 
   node.children.forEach((child, index) => {
-    // Child branch color: for depth 1, assign unique branch color; deeper inherit
     const childColor = depth === 0 ? getBranchColor(index, child.color) : (child.color || nodeColor);
     const childLayout = computeSubtreeHeights(child, depth + 1, node.id, childColor);
     layoutChildren.push(childLayout);
@@ -134,6 +148,17 @@ function computeSubtreeHeights(
     url: node.url,
     priority: node.priority,
     tags: node.tags,
+    nodeType: node.nodeType || 'general',
+    lawArticle: node.lawArticle,
+    caseVolume: node.caseVolume,
+    casePages: node.casePages,
+    evidenceStatus: node.evidenceStatus,
+    evidenceType: node.evidenceType,
+    eventDate: node.eventDate,
+    eventTime: node.eventTime,
+    strengthScore: node.strengthScore,
+    opponentStance: node.opponentStance,
+    citation: node.citation,
     children: layoutChildren,
     parentId,
     isRoot,
@@ -207,7 +232,6 @@ function assignCoordinates(
 
 /**
  * Main layout calculation entry point.
- * Converts raw nested MindNode hierarchy into positioned LayoutNodes and SVG connections.
  */
 export function calculateTreeLayout(
   rootNode: MindNode,
@@ -228,11 +252,22 @@ export function calculateTreeLayout(
   let maxDepth = 0;
   let totalNodes = 0;
   let collapsedNodes = 0;
+  let thesesCount = 0;
+  let evidenceCount = 0;
+  let normsCount = 0;
+  let eventsCount = 0;
+  let risksCount = 0;
 
   function traverseStats(node: LayoutNode) {
     totalNodes++;
     if (node.isCollapsed) collapsedNodes++;
     if (node.depth > maxDepth) maxDepth = node.depth;
+
+    if (node.nodeType === 'thesis') thesesCount++;
+    else if (node.nodeType === 'evidence' || node.casePages) evidenceCount++;
+    else if (node.nodeType === 'norm' || node.lawArticle) normsCount++;
+    else if (node.nodeType === 'fact_timeline' || node.eventDate) eventsCount++;
+    else if (node.nodeType === 'risk' || node.nodeType === 'counter_arg') risksCount++;
 
     minX = Math.min(minX, node.x);
     minY = Math.min(minY, node.y);
@@ -259,6 +294,11 @@ export function calculateTreeLayout(
     totalNodes,
     maxDepth,
     collapsedNodes,
+    thesesCount,
+    evidenceCount,
+    normsCount,
+    eventsCount,
+    risksCount,
   };
 
   return {

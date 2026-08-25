@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Search, X, CornerDownLeft } from 'lucide-react';
+import { Search, X, CornerDownLeft, BookOpen, Calendar } from 'lucide-react';
 import { useMindMapStore } from '../../store/useMindMapStore';
 import { MindNode, SearchResult } from '../../types/mindmap';
 import { Kbd } from '../ui/Kbd';
@@ -33,10 +33,17 @@ export const SearchModal: React.FC = () => {
       const titleMatch = node.title.toLowerCase().includes(trimmed);
       const notesMatch = node.notes ? node.notes.toLowerCase().includes(trimmed) : false;
       const tagsMatch = node.tags ? node.tags.some((t) => t.toLowerCase().includes(trimmed)) : false;
+      const articleMatch = node.lawArticle ? node.lawArticle.toLowerCase().includes(trimmed) : false;
+      const dateMatch = node.eventDate ? node.eventDate.toLowerCase().includes(trimmed) : false;
+      const pagesMatch = node.casePages ? node.casePages.toLowerCase().includes(trimmed) : false;
 
-      if (!trimmed || titleMatch || notesMatch || tagsMatch) {
+      if (!trimmed || titleMatch || notesMatch || tagsMatch || articleMatch || dateMatch || pagesMatch) {
         let snippet: string | undefined;
-        if (notesMatch && node.notes) {
+        if (articleMatch && node.lawArticle) {
+          snippet = `Статья: ${node.lawArticle}`;
+        } else if (dateMatch && node.eventDate) {
+          snippet = `Дата: ${node.eventDate}`;
+        } else if (notesMatch && node.notes) {
           snippet = node.notes;
         } else if (tagsMatch && node.tags) {
           snippet = node.tags.map((t) => `#${t}`).join(' ');
@@ -47,6 +54,9 @@ export const SearchModal: React.FC = () => {
           title: node.title,
           snippet,
           path: path,
+          nodeType: node.nodeType,
+          lawArticle: node.lawArticle,
+          eventDate: node.eventDate,
         });
       }
 
@@ -107,12 +117,12 @@ export const SearchModal: React.FC = () => {
               setSelectedIndex(0);
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Поиск по узлам, заметкам, тегам..."
+            placeholder="Поиск по тезисам, статьям законов, датам, доказательствам..."
             className="flex-1 bg-transparent text-zinc-100 placeholder-zinc-500 text-sm outline-none font-medium"
           />
           <button
             onClick={() => setSearchOpen(false)}
-            className="p-1 text-zinc-500 hover:text-zinc-300 rounded transition-colors"
+            className="p-1 text-zinc-500 hover:text-zinc-300 rounded transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -146,8 +156,10 @@ export const SearchModal: React.FC = () => {
                       </div>
                     )}
                     {/* Node Title */}
-                    <div className="font-medium text-sm text-zinc-100 truncate">
-                      {res.title}
+                    <div className="flex items-center gap-2 font-medium text-sm text-zinc-100 truncate">
+                      {res.lawArticle && <BookOpen className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />}
+                      {res.eventDate && <Calendar className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />}
+                      <span className="truncate">{res.title}</span>
                     </div>
                     {/* Snippet / Notes / Tag */}
                     {res.snippet && (

@@ -1,14 +1,15 @@
 import { create } from 'zustand';
-import { MindNode, NodeId } from '../types/mindmap';
-import { INITIAL_MIND_MAP } from '../lib/sample-data';
+import { MindNode, NodeId, LegalNodeType } from '../types/mindmap';
+import { INITIAL_MIND_MAP, CASE_TEMPLATES } from '../lib/sample-data';
 import { generateNodeId, parseMarkdownToTree } from '../lib/markdown-parser';
 import { findParentInTree, findNodeInTree } from '../lib/tree-layout';
+import { loadSharedCaseFromUrl } from '../lib/share-utils';
 
-const LOCAL_STORAGE_KEY = 'mental_map_tree_v1';
+const LOCAL_STORAGE_KEY = 'legal_mental_map_tree_v2';
 const MAX_HISTORY_STEPS = 50;
 
 /**
- * Deep clones a MindNode tree.
+ * Deep clones a MindNode tree with all legal properties.
  */
 function cloneTree(node: MindNode): MindNode {
   return {
@@ -19,9 +20,16 @@ function cloneTree(node: MindNode): MindNode {
 }
 
 /**
- * Loads persisted tree from localStorage or falls back to INITIAL_MIND_MAP.
+ * Loads tree from shared URL or localStorage or INITIAL_MIND_MAP.
  */
 function loadInitialTree(): MindNode {
+  // 1. Check if a shared case is present in the URL
+  const sharedCase = loadSharedCaseFromUrl();
+  if (sharedCase) {
+    return sharedCase;
+  }
+
+  // 2. Check localStorage
   try {
     const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (saved) {
@@ -31,8 +39,10 @@ function loadInitialTree(): MindNode {
       }
     }
   } catch (err) {
-    console.warn('Failed to load tree from localStorage, using default sample', err);
+    console.warn('Failed to load case from localStorage, using default', err);
   }
+
+  // 3. Default starter case
   return INITIAL_MIND_MAP;
 }
 
@@ -43,7 +53,7 @@ function persistTree(root: MindNode) {
   try {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(root));
   } catch (err) {
-    console.warn('Failed to persist tree to localStorage', err);
+    console.warn('Failed to persist case to localStorage', err);
   }
 }
 
@@ -57,25 +67,36 @@ export interface MindMapStore {
   past: MindNode[];
   future: MindNode[];
 
-  // UI state
+  // Filter & Search
+  filterNodeType: LegalNodeType | 'all';
   searchQuery: string;
+
+  // Modals state
   isSearchOpen: boolean;
   isExportImportOpen: boolean;
   isShortcutsOpen: boolean;
   isSidebarOpen: boolean;
+  isTimelineOpen: boolean;
+  isCourtDocOpen: boolean;
+  isShareOpen: boolean;
+  isTemplatesOpen: boolean;
 
   // Tree manipulation actions
   selectNode: (id: NodeId | null) => void;
   startEditing: (id: NodeId) => void;
   stopEditing: () => void;
-  addChildNode: (parentId?: NodeId, defaultTitle?: string) => NodeId | null;
+  addChildNode: (parentId?: NodeId, defaultTitle?: string, nodeType?: LegalNodeType) => NodeId | null;
   addSiblingNode: (targetNodeId?: NodeId, defaultTitle?: string) => NodeId | null;
   updateNode: (nodeId: NodeId, updates: Partial<Omit<MindNode, 'id' | 'children'>>) => void;
   deleteNode: (nodeId: NodeId) => void;
+  duplicateNode: (nodeId: NodeId) => NodeId | null;
   toggleCollapse: (nodeId: NodeId) => void;
   collapseAll: () => void;
   expandAll: () => void;
   moveNode: (nodeId: NodeId, newParentId: NodeId, insertIndex?: number) => boolean;
+
+  // Case Template loading
+  loadTemplate: (templateId: string) => void;
 
   // Import / Export / History
   importFromMarkdown: (markdown: string) => void;
@@ -87,26 +108,36 @@ export interface MindMapStore {
   canRedo: () => boolean;
 
   // Modals & Panels
+  setFilterNodeType: (type: LegalNodeType | 'all') => void;
   setSearchQuery: (query: string) => void;
   setSearchOpen: (open: boolean) => void;
   setExportImportOpen: (open: boolean) => void;
   setShortcutsOpen: (open: boolean) => void;
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
+  setTimelineOpen: (open: boolean) => void;
+  setCourtDocOpen: (open: boolean) => void;
+  setShareOpen: (open: boolean) => void;
+  setTemplatesOpen: (open: boolean) => void;
 }
 
 export const useMindMapStore = create<MindMapStore>((set, get) => ({
   root: loadInitialTree(),
-  selectedId: 'root-node',
+  selectedId: 'case-root',
   editingId: null,
   past: [],
   future: [],
 
+  filterNodeType: 'all',
   searchQuery: '',
   isSearchOpen: false,
   isExportImportOpen: false,
   isShortcutsOpen: false,
-  isSidebarOpen: false,
+  isSidebarOpen: true, // open inspector by default for rich legal editing
+  isTimelineOpen: false,
+  isCourtDocOpen: false,
+  isShareOpen: false,
+  isTemplatesOpen: false,
 
   selectNode: (id) => {
     set({ selectedId: id });
@@ -120,7 +151,7 @@ export const useMindMapStore = create<MindMapStore>((set, get) => ({
     set({ editingId: null });
   },
 
-  addChildNode: (parentId, defaultTitle = 'Новый узел') => {
+  addChildNode: (parentId, defaultTitle = 'Новый элемент', nodeType = 'general') => {
     const { root, selectedId, past } = get();
     const targetParentId = parentId || selectedId || root.id;
 
@@ -130,13 +161,13 @@ export const useMindMapStore = create<MindMapStore>((set, get) => ({
     const parentNode = findNodeInTree(newRoot, targetParentId);
     if (!parentNode) return null;
 
-    // Expand parent if it was collapsed so the new child is visible
     parentNode.isCollapsed = false;
 
     const newChildId = generateNodeId();
     const newChild: MindNode = {
       id: newChildId,
       title: defaultTitle,
+      nodeType: nodeType,
       children: [],
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -160,12 +191,11 @@ export const useMindMapStore = create<MindMapStore>((set, get) => ({
     return newChildId;
   },
 
-  addSiblingNode: (targetNodeId, defaultTitle = 'Новый узел') => {
+  addSiblingNode: (targetNodeId, defaultTitle = 'Новый элемент') => {
     const { root, selectedId, past } = get();
     const targetId = targetNodeId || selectedId;
 
     if (!targetId || targetId === root.id) {
-      // Cannot add sibling to root, add child instead
       return get().addChildNode(root.id, defaultTitle);
     }
 
@@ -178,16 +208,17 @@ export const useMindMapStore = create<MindMapStore>((set, get) => ({
     const currentIndex = parentNode.children.findIndex((c) => c.id === targetId);
     if (currentIndex === -1) return null;
 
+    const currentSibling = parentNode.children[currentIndex];
     const newSiblingId = generateNodeId();
     const newSibling: MindNode = {
       id: newSiblingId,
       title: defaultTitle,
+      nodeType: currentSibling.nodeType || 'general',
       children: [],
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
 
-    // Insert right after current sibling
     parentNode.children.splice(currentIndex + 1, 0, newSibling);
 
     persistTree(newRoot);
@@ -203,13 +234,50 @@ export const useMindMapStore = create<MindMapStore>((set, get) => ({
     return newSiblingId;
   },
 
+  duplicateNode: (nodeId) => {
+    const { root, past } = get();
+    if (nodeId === root.id) return null;
+
+    const newPast = [...past.slice(-MAX_HISTORY_STEPS + 1), cloneTree(root)];
+    const newRoot = cloneTree(root);
+
+    const parent = findParentInTree(newRoot, nodeId);
+    const target = findNodeInTree(newRoot, nodeId);
+    if (!parent || !parent.children || !target) return null;
+
+    const index = parent.children.findIndex((c) => c.id === nodeId);
+    if (index === -1) return null;
+
+    function duplicateWithNewIds(node: MindNode): MindNode {
+      return {
+        ...cloneTree(node),
+        id: generateNodeId(),
+        title: node.title + ' (копия)',
+        children: node.children ? node.children.map(duplicateWithNewIds) : [],
+      };
+    }
+
+    const duplicated = duplicateWithNewIds(target);
+    parent.children.splice(index + 1, 0, duplicated);
+
+    persistTree(newRoot);
+
+    set({
+      root: newRoot,
+      past: newPast,
+      future: [],
+      selectedId: duplicated.id,
+    });
+
+    return duplicated.id;
+  },
+
   updateNode: (nodeId, updates) => {
     const { root, past } = get();
     const newRoot = cloneTree(root);
     const node = findNodeInTree(newRoot, nodeId);
     if (!node) return;
 
-    // Check if anything actually changed before adding to history
     let hasChanges = false;
     for (const key of Object.keys(updates) as (keyof typeof updates)[]) {
       if (node[key] !== updates[key]) {
@@ -235,7 +303,6 @@ export const useMindMapStore = create<MindMapStore>((set, get) => ({
 
   deleteNode: (nodeId) => {
     const { root, past, selectedId } = get();
-    // Cannot delete root node
     if (nodeId === root.id) return;
 
     const newPast = [...past.slice(-MAX_HISTORY_STEPS + 1), cloneTree(root)];
@@ -249,7 +316,6 @@ export const useMindMapStore = create<MindMapStore>((set, get) => ({
 
     parentNode.children.splice(index, 1);
 
-    // If deleted node was selected, select parent or previous sibling
     let nextSelectedId = selectedId;
     if (selectedId === nodeId) {
       if (parentNode.children.length > 0) {
@@ -339,12 +405,10 @@ export const useMindMapStore = create<MindMapStore>((set, get) => ({
     const { root, past } = get();
     if (nodeId === root.id || nodeId === newParentId) return false;
 
-    // Prevent dragging parent into its own descendant
     const newRoot = cloneTree(root);
     const nodeToMove = findNodeInTree(newRoot, nodeId);
     if (!nodeToMove) return false;
 
-    // Check if newParent is inside nodeToMove
     if (findNodeInTree(nodeToMove, newParentId)) {
       return false;
     }
@@ -358,10 +422,8 @@ export const useMindMapStore = create<MindMapStore>((set, get) => ({
 
     const newPast = [...past.slice(-MAX_HISTORY_STEPS + 1), cloneTree(root)];
 
-    // Remove from old parent
     const [extracted] = oldParent.children.splice(oldIndex, 1);
 
-    // Insert into new parent
     if (!newParent.children) newParent.children = [];
     newParent.isCollapsed = false;
 
@@ -381,6 +443,26 @@ export const useMindMapStore = create<MindMapStore>((set, get) => ({
     });
 
     return true;
+  },
+
+  loadTemplate: (templateId) => {
+    const found = CASE_TEMPLATES.find((t) => t.id === templateId);
+    if (!found) return;
+
+    const { root, past } = get();
+    const newPast = [...past.slice(-MAX_HISTORY_STEPS + 1), cloneTree(root)];
+    const templateTree = cloneTree(found.data);
+
+    persistTree(templateTree);
+
+    set({
+      root: templateTree,
+      past: newPast,
+      future: [],
+      selectedId: templateTree.id,
+      editingId: null,
+      isTemplatesOpen: false,
+    });
   },
 
   importFromMarkdown: (markdown) => {
@@ -481,10 +563,15 @@ export const useMindMapStore = create<MindMapStore>((set, get) => ({
   canUndo: () => get().past.length > 0,
   canRedo: () => get().future.length > 0,
 
+  setFilterNodeType: (type) => set({ filterNodeType: type }),
   setSearchQuery: (query) => set({ searchQuery: query }),
   setSearchOpen: (open) => set({ isSearchOpen: open, searchQuery: open ? get().searchQuery : '' }),
   setExportImportOpen: (open) => set({ isExportImportOpen: open }),
   setShortcutsOpen: (open) => set({ isShortcutsOpen: open }),
   setSidebarOpen: (open) => set({ isSidebarOpen: open }),
   toggleSidebar: () => set((s) => ({ isSidebarOpen: !s.isSidebarOpen })),
+  setTimelineOpen: (open) => set({ isTimelineOpen: open }),
+  setCourtDocOpen: (open) => set({ isCourtDocOpen: open }),
+  setShareOpen: (open) => set({ isShareOpen: open }),
+  setTemplatesOpen: (open) => set({ isTemplatesOpen: open }),
 }));
