@@ -8,13 +8,13 @@ interface UseCanvasPanZoomProps {
 }
 
 export function useCanvasPanZoom({
-  minScale = 0.15,
+  minScale = 0.2,
   maxScale = 2.5,
   initialScale = 1.0,
 }: UseCanvasPanZoomProps = {}) {
   const [transform, setTransform] = useState<CanvasTransform>({
-    x: window.innerWidth > 1200 ? 180 : 80,
-    y: window.innerHeight / 2 - 40,
+    x: 100,
+    y: typeof window !== 'undefined' ? window.innerHeight / 2 - 80 : 300,
     scale: initialScale,
   });
 
@@ -23,11 +23,16 @@ export function useCanvasPanZoom({
   const dragStartRef = useRef<{ x: number; y: number; originX: number; originY: number } | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // Track space bar key state
+  // Track space bar key state for Space+Drag pan mode
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable ||
+        target.closest('input, textarea, [contenteditable="true"]')
+      ) {
         return;
       }
       if (e.code === 'Space' && !e.repeat) {
@@ -50,7 +55,7 @@ export function useCanvasPanZoom({
   }, []);
 
   /**
-   * Smooth zooming centered directly at cursor position.
+   * Smooth mathematically safe exponential zoom centered at mouse position.
    */
   const handleWheel = useCallback(
     (e: React.WheelEvent<HTMLDivElement>) => {
@@ -61,18 +66,27 @@ export function useCanvasPanZoom({
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
 
-      // Detect trackpad pinch vs regular scroll wheel
+      // Trackpad pinch vs regular mouse scroll wheel
       const isPinch = e.ctrlKey || e.metaKey;
-      const zoomFactor = isPinch ? 1 - e.deltaY * 0.015 : e.deltaY > 0 ? 0.9 : 1.1;
+      const delta = -e.deltaY;
+
+      // Exponential factor is strictly positive (> 0) to avoid any negative inversion
+      let zoomFactor: number;
+      if (isPinch) {
+        // Trackpad pinch zoom
+        zoomFactor = Math.exp(delta * 0.008);
+      } else {
+        // Standard mouse scroll step
+        zoomFactor = delta > 0 ? 1.12 : 0.89;
+      }
 
       setTransform((prev) => {
         const nextScale = Math.min(Math.max(prev.scale * zoomFactor, minScale), maxScale);
-        if (nextScale === prev.scale) return prev;
+        if (Math.abs(nextScale - prev.scale) < 0.0001) return prev;
 
-        // Zoom relative to mouse cursor
-        const scaleChange = nextScale / prev.scale;
-        const newX = mouseX - (mouseX - prev.x) * scaleChange;
-        const newY = mouseY - (mouseY - prev.y) * scaleChange;
+        const scaleRatio = nextScale / prev.scale;
+        const newX = mouseX - (mouseX - prev.x) * scaleRatio;
+        const newY = mouseY - (mouseY - prev.y) * scaleRatio;
 
         return {
           x: Math.round(newX),
@@ -89,12 +103,14 @@ export function useCanvasPanZoom({
    */
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      // Middle click (button === 1), Space+Left click, or clicking directly on canvas background (button === 0)
+      // Don't pan if clicking on an interactive node input, button, link or modal
+      const target = e.target as HTMLElement;
+      const isInteractiveElement = target.closest('button, input, textarea, a, select, [role="button"], .group');
+
       const isMiddleClick = e.button === 1;
       const isLeftClick = e.button === 0;
-      const isCanvasBackground = (e.target as HTMLElement).getAttribute('data-canvas-bg') === 'true';
 
-      if (isMiddleClick || (isLeftClick && (isSpacePressed || isCanvasBackground))) {
+      if ((isLeftClick && !isInteractiveElement) || (isLeftClick && isSpacePressed) || isMiddleClick) {
         e.preventDefault();
         setIsPanning(true);
         dragStartRef.current = {
@@ -104,15 +120,19 @@ export function useCanvasPanZoom({
           originY: transform.y,
         };
 
-        // Capture pointer to track dragging outside container
-        (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+        // Capture pointer events on container
+        try {
+          containerRef.current?.setPointerCapture(e.pointerId);
+        } catch {
+          // ignore capture errors
+        }
       }
     },
     [isSpacePressed, transform.x, transform.y]
   );
 
   /**
-   * Pointer move handling for dragging canvas.
+   * Pointer move handling for dragging canvas smoothly.
    */
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -138,9 +158,9 @@ export function useCanvasPanZoom({
       setIsPanning(false);
       dragStartRef.current = null;
       try {
-        (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+        containerRef.current?.releasePointerCapture(e.pointerId);
       } catch {
-        // ignore capture release errors
+        // ignore capture errors
       }
     }
   }, [isPanning]);
@@ -155,7 +175,7 @@ export function useCanvasPanZoom({
     const cy = rect.height / 2;
 
     setTransform((prev) => {
-      const nextScale = Math.min(prev.scale * 1.25, maxScale);
+      const nextScale = Math.min(prev.scale * 1.2, maxScale);
       const scaleChange = nextScale / prev.scale;
       return {
         x: Math.round(cx - (cx - prev.x) * scaleChange),
@@ -175,7 +195,7 @@ export function useCanvasPanZoom({
     const cy = rect.height / 2;
 
     setTransform((prev) => {
-      const nextScale = Math.max(prev.scale / 1.25, minScale);
+      const nextScale = Math.max(prev.scale / 1.2, minScale);
       const scaleChange = nextScale / prev.scale;
       return {
         x: Math.round(cx - (cx - prev.x) * scaleChange),
@@ -192,29 +212,33 @@ export function useCanvasPanZoom({
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     setTransform({
-      x: Math.round(rect.width * 0.15),
-      y: Math.round(rect.height / 2),
+      x: Math.round(rect.width * 0.1),
+      y: Math.round(rect.height / 2 - 30),
       scale: 1.0,
     });
   }, []);
 
   /**
-   * Fits the entire mental map bounding box neatly within the canvas viewport with padding.
+   * Fits the entire mental map bounding box neatly within the canvas viewport with comfortable padding.
    */
   const fitToBoundingBox = useCallback(
     (bbox: TreeBoundingBox) => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
-      const padding = 80;
+      const paddingX = 100;
+      const paddingY = 80;
 
-      const availWidth = Math.max(100, rect.width - padding * 2);
-      const availHeight = Math.max(100, rect.height - padding * 2);
+      const availWidth = Math.max(200, rect.width - paddingX * 2);
+      const availHeight = Math.max(200, rect.height - paddingY * 2);
 
-      const scaleX = availWidth / bbox.width;
-      const scaleY = availHeight / bbox.height;
-      const fitScale = Math.min(Math.max(Math.min(scaleX, scaleY), minScale), 1.2);
+      const treeW = Math.max(100, bbox.width);
+      const treeH = Math.max(100, bbox.height);
 
-      // Center the bounding box in viewport
+      const scaleX = availWidth / treeW;
+      const scaleY = availHeight / treeH;
+      const fitScale = Math.min(Math.max(Math.min(scaleX, scaleY), minScale), 1.15);
+
+      // Center tree in canvas viewport
       const treeCenterX = bbox.minX + bbox.width / 2;
       const treeCenterY = bbox.minY + bbox.height / 2;
 
