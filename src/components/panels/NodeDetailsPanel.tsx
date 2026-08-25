@@ -58,6 +58,7 @@ export const NodeDetailsPanel: React.FC = () => {
     updateNode,
     deleteNode,
     duplicateNode,
+    openConfirmDialog,
   } = useMindMapStore();
 
   const [tagInput, setTagInput] = useState('');
@@ -104,6 +105,19 @@ export const NodeDetailsPanel: React.FC = () => {
         tags: currentNode.tags.filter((t) => t !== tagToRemove),
       });
     }
+  };
+
+  const handleDeleteNode = () => {
+    if (!currentNode) return;
+    openConfirmDialog({
+      title: 'Удалить юридический блок?',
+      message: `Вы действительно хотите удалить блок «${currentNode.title}» и все вложенные материалы?`,
+      confirmLabel: 'Удалить блок',
+      variant: 'danger',
+      onConfirm: () => {
+        deleteNode(currentNode.id);
+      },
+    });
   };
 
   return (
@@ -471,7 +485,7 @@ export const NodeDetailsPanel: React.FC = () => {
               </button>
 
               <button
-                onClick={() => deleteNode(currentNode.id)}
+                onClick={handleDeleteNode}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-rose-400 hover:text-white bg-rose-950/40 hover:bg-rose-900/70 border border-rose-900/60 rounded-lg transition-colors cursor-pointer"
                 title="Удалить блок и все дочерние элементы"
               >

@@ -1,577 +1,822 @@
 import { create } from 'zustand';
-import { MindNode, NodeId, LegalNodeType } from '../types/mindmap';
-import { INITIAL_MIND_MAP, CASE_TEMPLATES } from '../lib/sample-data';
-import { generateNodeId, parseMarkdownToTree } from '../lib/markdown-parser';
-import { findParentInTree, findNodeInTree } from '../lib/tree-layout';
+import {
+  MindNode,
+  NodeId,
+  LegalNodeType,
+  CaseItem,
+  JudicialInstance,
+  CaseStatus,
+  ToastMessage,
+  ConfirmDialogConfig,
+} from '../types/mindmap';
+import { INITIAL_CASES, INITIAL_MIND_MAP, CASE_TEMPLATES } from '../lib/sample-data';
 import { loadSharedCaseFromUrl } from '../lib/share-utils';
+import { parseMarkdownToTree } from '../lib/markdown-parser';
 
-const LOCAL_STORAGE_KEY = 'legal_mental_map_tree_v2';
-const MAX_HISTORY_STEPS = 50;
+const STORAGE_CASES_KEY = 'legal_mindmap_cases_v2';
+const STORAGE_ACTIVE_KEY = 'legal_mindmap_active_case_id_v2';
 
-/**
- * Deep clones a MindNode tree with all legal properties.
- */
-function cloneTree(node: MindNode): MindNode {
-  return {
-    ...node,
-    tags: node.tags ? [...node.tags] : undefined,
-    children: node.children ? node.children.map(cloneTree) : [],
-  };
-}
+interface MindMapState {
+  // Multi-case portfolio state
+  cases: CaseItem[];
+  activeCaseId: string;
 
-/**
- * Loads tree from shared URL or localStorage or INITIAL_MIND_MAP.
- */
-function loadInitialTree(): MindNode {
-  // 1. Check if a shared case is present in the URL
-  const sharedCase = loadSharedCaseFromUrl();
-  if (sharedCase) {
-    return sharedCase;
-  }
-
-  // 2. Check localStorage
-  try {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed && parsed.id && parsed.title) {
-        return parsed;
-      }
-    }
-  } catch (err) {
-    console.warn('Failed to load case from localStorage, using default', err);
-  }
-
-  // 3. Default starter case
-  return INITIAL_MIND_MAP;
-}
-
-/**
- * Saves tree to localStorage.
- */
-function persistTree(root: MindNode) {
-  try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(root));
-  } catch (err) {
-    console.warn('Failed to persist case to localStorage', err);
-  }
-}
-
-export interface MindMapStore {
-  // Tree state
+  // Active tree state
   root: MindNode;
   selectedId: NodeId | null;
   editingId: NodeId | null;
 
-  // History for Undo/Redo
-  past: MindNode[];
-  future: MindNode[];
+  // History for active case
+  history: MindNode[];
+  historyIndex: number;
 
-  // Filter & Search
+  // Filter state
   filterNodeType: LegalNodeType | 'all';
-  searchQuery: string;
+  setFilterNodeType: (type: LegalNodeType | 'all') => void;
 
-  // Modals state
+  // UI Panels and Modals
+  isSidebarOpen: boolean;
   isSearchOpen: boolean;
   isExportImportOpen: boolean;
   isShortcutsOpen: boolean;
-  isSidebarOpen: boolean;
   isTimelineOpen: boolean;
   isCourtDocOpen: boolean;
   isShareOpen: boolean;
   isTemplatesOpen: boolean;
+  isPortfolioOpen: boolean;
+  isNewCaseOpen: boolean;
 
-  // Tree manipulation actions
+  // Dialog & Toast State
+  toasts: ToastMessage[];
+  confirmDialog: ConfirmDialogConfig;
+
+  // Actions for Case Management
+  createCase: (params: {
+    title: string;
+    instance: JudicialInstance;
+    courtName: string;
+    judge?: string;
+    caseNumber?: string;
+    status?: CaseStatus;
+    templateId?: string;
+    description?: string;
+  }) => void;
+  switchCase: (caseId: string) => void;
+  updateCaseMetadata: (caseId: string, updates: Partial<Omit<CaseItem, 'id' | 'root'>>) => void;
+  duplicateCase: (caseId: string) => void;
+  deleteCase: (caseId: string) => void;
+  promoteToNextInstance: (caseId: string, nextInstance: JudicialInstance) => void;
+
+  // Active Tree Node Actions
   selectNode: (id: NodeId | null) => void;
   startEditing: (id: NodeId) => void;
   stopEditing: () => void;
-  addChildNode: (parentId?: NodeId, defaultTitle?: string, nodeType?: LegalNodeType) => NodeId | null;
-  addSiblingNode: (targetNodeId?: NodeId, defaultTitle?: string) => NodeId | null;
-  updateNode: (nodeId: NodeId, updates: Partial<Omit<MindNode, 'id' | 'children'>>) => void;
-  deleteNode: (nodeId: NodeId) => void;
-  duplicateNode: (nodeId: NodeId) => NodeId | null;
-  toggleCollapse: (nodeId: NodeId) => void;
+  updateNode: (id: NodeId, updates: Partial<MindNode>) => void;
+  addChildNode: (parentId: NodeId, title?: string, nodeType?: LegalNodeType) => void;
+  addSiblingNode: (siblingId: NodeId, title?: string, nodeType?: LegalNodeType) => void;
+  deleteNode: (id: NodeId) => void;
+  duplicateNode: (id: NodeId) => void;
+  moveNode: (draggedId: NodeId, targetParentId: NodeId) => void;
+  toggleCollapse: (id: NodeId) => void;
   collapseAll: () => void;
   expandAll: () => void;
-  moveNode: (nodeId: NodeId, newParentId: NodeId, insertIndex?: number) => boolean;
-
-  // Case Template loading
   loadTemplate: (templateId: string) => void;
-
-  // Import / Export / History
   importFromMarkdown: (markdown: string) => void;
   importFromJson: (jsonStr: string) => boolean;
   resetToDefault: () => void;
+  setRoot: (newRoot: MindNode) => void;
+
+  // History Actions
   undo: () => void;
   redo: () => void;
   canUndo: () => boolean;
   canRedo: () => boolean;
 
-  // Modals & Panels
-  setFilterNodeType: (type: LegalNodeType | 'all') => void;
-  setSearchQuery: (query: string) => void;
+  // UI Dialog/Toast actions
+  addToast: (toast: Omit<ToastMessage, 'id'>) => void;
+  removeToast: (id: string) => void;
+  openConfirmDialog: (config: Omit<ConfirmDialogConfig, 'isOpen'>) => void;
+  closeConfirmDialog: () => void;
+
+  // Modal Toggles
+  setSidebarOpen: (open: boolean) => void;
+  toggleSidebar: () => void;
   setSearchOpen: (open: boolean) => void;
   setExportImportOpen: (open: boolean) => void;
   setShortcutsOpen: (open: boolean) => void;
-  setSidebarOpen: (open: boolean) => void;
-  toggleSidebar: () => void;
   setTimelineOpen: (open: boolean) => void;
   setCourtDocOpen: (open: boolean) => void;
   setShareOpen: (open: boolean) => void;
   setTemplatesOpen: (open: boolean) => void;
+  setPortfolioOpen: (open: boolean) => void;
+  setNewCaseOpen: (open: boolean) => void;
 }
 
-export const useMindMapStore = create<MindMapStore>((set, get) => ({
-  root: loadInitialTree(),
-  selectedId: 'case-root',
-  editingId: null,
-  past: [],
-  future: [],
+// Generate unique id
+const uid = () => `node-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+const caseUid = () => `case-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+const toastUid = () => `toast-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
 
+// Load initial cases from storage or default
+function getInitialCases(): { cases: CaseItem[]; activeId: string; root: MindNode } {
+  // Check if URL has a shared case
+  const sharedCase = loadSharedCaseFromUrl();
+  if (sharedCase) {
+    const newCase: CaseItem = {
+      id: caseUid(),
+      title: sharedCase.title || 'Импортированное дело из ссылки',
+      instance: 'first_instance',
+      courtName: 'Арбитражный суд',
+      status: 'in_progress',
+      root: sharedCase,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    return {
+      cases: [newCase, ...INITIAL_CASES],
+      activeId: newCase.id,
+      root: sharedCase,
+    };
+  }
+
+  try {
+    const rawCases = localStorage.getItem(STORAGE_CASES_KEY);
+    const activeId = localStorage.getItem(STORAGE_ACTIVE_KEY);
+    if (rawCases) {
+      const parsed: CaseItem[] = JSON.parse(rawCases);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const found = parsed.find((c) => c.id === activeId) || parsed[0];
+        return {
+          cases: parsed,
+          activeId: found.id,
+          root: found.root,
+        };
+      }
+    }
+  } catch {
+    // ignore storage error
+  }
+
+  return {
+    cases: INITIAL_CASES,
+    activeId: INITIAL_CASES[0].id,
+    root: INITIAL_CASES[0].root,
+  };
+}
+
+const initialData = getInitialCases();
+
+// Helper to deep clone node tree
+function cloneTree(node: MindNode): MindNode {
+  return {
+    ...node,
+    children: node.children ? node.children.map(cloneTree) : undefined,
+  };
+}
+
+// Helper to recursively update a node in tree
+function updateInTree(node: MindNode, id: NodeId, updates: Partial<MindNode>): MindNode {
+  if (node.id === id) {
+    return { ...node, ...updates, updatedAt: Date.now() };
+  }
+  if (!node.children) return node;
+  return {
+    ...node,
+    children: node.children.map((child) => updateInTree(child, id, updates)),
+  };
+}
+
+// Helper to recursively add a child to a node
+function addChildInTree(node: MindNode, parentId: NodeId, newNode: MindNode): MindNode {
+  if (node.id === parentId) {
+    const children = node.children ? [...node.children, newNode] : [newNode];
+    return {
+      ...node,
+      children,
+      isCollapsed: false,
+      updatedAt: Date.now(),
+    };
+  }
+  if (!node.children) return node;
+  return {
+    ...node,
+    children: node.children.map((child) => addChildInTree(child, parentId, newNode)),
+  };
+}
+
+// Helper to recursively add a sibling
+function addSiblingInTree(node: MindNode, siblingId: NodeId, newNode: MindNode): MindNode {
+  if (!node.children) return node;
+  const index = node.children.findIndex((c) => c.id === siblingId);
+  if (index !== -1) {
+    const newChildren = [...node.children];
+    newChildren.splice(index + 1, 0, newNode);
+    return {
+      ...node,
+      children: newChildren,
+      updatedAt: Date.now(),
+    };
+  }
+  return {
+    ...node,
+    children: node.children.map((child) => addSiblingInTree(child, siblingId, newNode)),
+  };
+}
+
+// Helper to remove node and return new tree
+function deleteFromTree(node: MindNode, idToDelete: NodeId): MindNode | null {
+  if (node.id === idToDelete) return null;
+  if (!node.children) return node;
+  const filtered = node.children
+    .map((c) => deleteFromTree(c, idToDelete))
+    .filter(Boolean) as MindNode[];
+  return {
+    ...node,
+    children: filtered,
+    updatedAt: Date.now(),
+  };
+}
+
+// Helper to find node in tree
+function findNode(node: MindNode, id: NodeId): MindNode | null {
+  if (node.id === id) return node;
+  if (node.children) {
+    for (const child of node.children) {
+      const res = findNode(child, id);
+      if (res) return res;
+    }
+  }
+  return null;
+}
+
+// Save helper to persist cases to localStorage
+function saveCasesToStorage(cases: CaseItem[], activeId: string) {
+  try {
+    localStorage.setItem(STORAGE_CASES_KEY, JSON.stringify(cases));
+    localStorage.setItem(STORAGE_ACTIVE_KEY, activeId);
+  } catch {
+    // ignore quota errors
+  }
+}
+
+export const useMindMapStore = create<MindMapState>((set, get) => ({
+  cases: initialData.cases,
+  activeCaseId: initialData.activeId,
+  root: initialData.root,
+  selectedId: initialData.root.id,
+  editingId: null,
+  history: [initialData.root],
+  historyIndex: 0,
   filterNodeType: 'all',
-  searchQuery: '',
+
+  isSidebarOpen: true,
   isSearchOpen: false,
   isExportImportOpen: false,
   isShortcutsOpen: false,
-  isSidebarOpen: true, // open inspector by default for rich legal editing
   isTimelineOpen: false,
   isCourtDocOpen: false,
   isShareOpen: false,
   isTemplatesOpen: false,
+  isPortfolioOpen: false,
+  isNewCaseOpen: false,
 
-  selectNode: (id) => {
-    set({ selectedId: id });
+  toasts: [],
+  confirmDialog: {
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
   },
 
-  startEditing: (id) => {
-    set({ editingId: id, selectedId: id });
-  },
+  setFilterNodeType: (filterNodeType) => set({ filterNodeType }),
 
-  stopEditing: () => {
-    set({ editingId: null });
-  },
+  // Push new history step and sync to active case
+  _pushHistory: (newRoot: MindNode) => {
+    const { history, historyIndex, cases, activeCaseId } = get();
+    const updatedHistory = [...history.slice(0, historyIndex + 1), newRoot];
+    if (updatedHistory.length > 50) updatedHistory.shift();
 
-  addChildNode: (parentId, defaultTitle = 'Новый элемент', nodeType = 'general') => {
-    const { root, selectedId, past } = get();
-    const targetParentId = parentId || selectedId || root.id;
+    const updatedCases = cases.map((c) =>
+      c.id === activeCaseId ? { ...c, root: newRoot, updatedAt: Date.now() } : c
+    );
 
-    const newPast = [...past.slice(-MAX_HISTORY_STEPS + 1), cloneTree(root)];
-    const newRoot = cloneTree(root);
-
-    const parentNode = findNodeInTree(newRoot, targetParentId);
-    if (!parentNode) return null;
-
-    parentNode.isCollapsed = false;
-
-    const newChildId = generateNodeId();
-    const newChild: MindNode = {
-      id: newChildId,
-      title: defaultTitle,
-      nodeType: nodeType,
-      children: [],
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-
-    if (!parentNode.children) {
-      parentNode.children = [];
-    }
-    parentNode.children.push(newChild);
-
-    persistTree(newRoot);
+    saveCasesToStorage(updatedCases, activeCaseId);
 
     set({
       root: newRoot,
-      past: newPast,
-      future: [],
-      selectedId: newChildId,
-      editingId: newChildId,
+      history: updatedHistory,
+      historyIndex: updatedHistory.length - 1,
+      cases: updatedCases,
     });
-
-    return newChildId;
   },
 
-  addSiblingNode: (targetNodeId, defaultTitle = 'Новый элемент') => {
-    const { root, selectedId, past } = get();
-    const targetId = targetNodeId || selectedId;
-
-    if (!targetId || targetId === root.id) {
-      return get().addChildNode(root.id, defaultTitle);
-    }
-
-    const newPast = [...past.slice(-MAX_HISTORY_STEPS + 1), cloneTree(root)];
-    const newRoot = cloneTree(root);
-
-    const parentNode = findParentInTree(newRoot, targetId);
-    if (!parentNode || !parentNode.children) return null;
-
-    const currentIndex = parentNode.children.findIndex((c) => c.id === targetId);
-    if (currentIndex === -1) return null;
-
-    const currentSibling = parentNode.children[currentIndex];
-    const newSiblingId = generateNodeId();
-    const newSibling: MindNode = {
-      id: newSiblingId,
-      title: defaultTitle,
-      nodeType: currentSibling.nodeType || 'general',
-      children: [],
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-
-    parentNode.children.splice(currentIndex + 1, 0, newSibling);
-
-    persistTree(newRoot);
-
-    set({
-      root: newRoot,
-      past: newPast,
-      future: [],
-      selectedId: newSiblingId,
-      editingId: newSiblingId,
-    });
-
-    return newSiblingId;
-  },
-
-  duplicateNode: (nodeId) => {
-    const { root, past } = get();
-    if (nodeId === root.id) return null;
-
-    const newPast = [...past.slice(-MAX_HISTORY_STEPS + 1), cloneTree(root)];
-    const newRoot = cloneTree(root);
-
-    const parent = findParentInTree(newRoot, nodeId);
-    const target = findNodeInTree(newRoot, nodeId);
-    if (!parent || !parent.children || !target) return null;
-
-    const index = parent.children.findIndex((c) => c.id === nodeId);
-    if (index === -1) return null;
-
-    function duplicateWithNewIds(node: MindNode): MindNode {
-      return {
-        ...cloneTree(node),
-        id: generateNodeId(),
-        title: node.title + ' (копия)',
-        children: node.children ? node.children.map(duplicateWithNewIds) : [],
+  // Case Management Actions
+  createCase: ({ title, instance, courtName, judge, caseNumber, status, templateId, description }) => {
+    let baseRoot: MindNode;
+    const template = CASE_TEMPLATES.find((t) => t.id === templateId);
+    if (template) {
+      baseRoot = cloneTree(template.data);
+      baseRoot.title = title;
+    } else {
+      baseRoot = {
+        id: 'root',
+        title,
+        nodeType: 'remedy',
+        children: [],
       };
     }
 
-    const duplicated = duplicateWithNewIds(target);
-    parent.children.splice(index + 1, 0, duplicated);
+    const newCase: CaseItem = {
+      id: caseUid(),
+      title,
+      instance,
+      courtName,
+      judge,
+      caseNumber,
+      status: status || 'in_progress',
+      description,
+      root: baseRoot,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
 
-    persistTree(newRoot);
-
-    set({
-      root: newRoot,
-      past: newPast,
-      future: [],
-      selectedId: duplicated.id,
-    });
-
-    return duplicated.id;
-  },
-
-  updateNode: (nodeId, updates) => {
-    const { root, past } = get();
-    const newRoot = cloneTree(root);
-    const node = findNodeInTree(newRoot, nodeId);
-    if (!node) return;
-
-    let hasChanges = false;
-    for (const key of Object.keys(updates) as (keyof typeof updates)[]) {
-      if (node[key] !== updates[key]) {
-        hasChanges = true;
-        break;
-      }
-    }
-
-    if (!hasChanges) return;
-
-    const newPast = [...past.slice(-MAX_HISTORY_STEPS + 1), cloneTree(root)];
-
-    Object.assign(node, updates, { updatedAt: Date.now() });
-
-    persistTree(newRoot);
+    const newCases = [newCase, ...get().cases];
+    saveCasesToStorage(newCases, newCase.id);
 
     set({
-      root: newRoot,
-      past: newPast,
-      future: [],
-    });
-  },
-
-  deleteNode: (nodeId) => {
-    const { root, past, selectedId } = get();
-    if (nodeId === root.id) return;
-
-    const newPast = [...past.slice(-MAX_HISTORY_STEPS + 1), cloneTree(root)];
-    const newRoot = cloneTree(root);
-
-    const parentNode = findParentInTree(newRoot, nodeId);
-    if (!parentNode || !parentNode.children) return;
-
-    const index = parentNode.children.findIndex((c) => c.id === nodeId);
-    if (index === -1) return;
-
-    parentNode.children.splice(index, 1);
-
-    let nextSelectedId = selectedId;
-    if (selectedId === nodeId) {
-      if (parentNode.children.length > 0) {
-        const fallbackIndex = Math.min(index, parentNode.children.length - 1);
-        nextSelectedId = parentNode.children[fallbackIndex].id;
-      } else {
-        nextSelectedId = parentNode.id;
-      }
-    }
-
-    persistTree(newRoot);
-
-    set({
-      root: newRoot,
-      past: newPast,
-      future: [],
-      selectedId: nextSelectedId,
+      cases: newCases,
+      activeCaseId: newCase.id,
+      root: baseRoot,
+      selectedId: baseRoot.id,
       editingId: null,
+      history: [baseRoot],
+      historyIndex: 0,
+    });
+
+    get().addToast({
+      type: 'success',
+      title: 'Дело успешно создано',
+      message: `Дело «${title}» добавлено в портфель.`,
     });
   },
 
-  toggleCollapse: (nodeId) => {
-    const { root, past } = get();
-    const newPast = [...past.slice(-MAX_HISTORY_STEPS + 1), cloneTree(root)];
-    const newRoot = cloneTree(root);
-    const node = findNodeInTree(newRoot, nodeId);
-    if (!node || !node.children || node.children.length === 0) return;
+  switchCase: (caseId) => {
+    const found = get().cases.find((c) => c.id === caseId);
+    if (!found) return;
 
-    node.isCollapsed = !node.isCollapsed;
-
-    persistTree(newRoot);
+    saveCasesToStorage(get().cases, caseId);
 
     set({
-      root: newRoot,
-      past: newPast,
-      future: [],
+      activeCaseId: caseId,
+      root: found.root,
+      selectedId: found.root.id,
+      editingId: null,
+      history: [found.root],
+      historyIndex: 0,
     });
+
+    get().addToast({
+      type: 'info',
+      title: 'Дело открыто',
+      message: `Переключено на «${found.title}».`,
+    });
+  },
+
+  updateCaseMetadata: (caseId, updates) => {
+    const updated = get().cases.map((c) => (c.id === caseId ? { ...c, ...updates, updatedAt: Date.now() } : c));
+    saveCasesToStorage(updated, get().activeCaseId);
+    set({ cases: updated });
+    get().addToast({
+      type: 'success',
+      title: 'Свойства дела сохранены',
+    });
+  },
+
+  duplicateCase: (caseId) => {
+    const found = get().cases.find((c) => c.id === caseId);
+    if (!found) return;
+
+    const cloned: CaseItem = {
+      ...found,
+      id: caseUid(),
+      title: `Копия — ${found.title}`,
+      root: cloneTree(found.root),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    const updated = [cloned, ...get().cases];
+    saveCasesToStorage(updated, get().activeCaseId);
+    set({ cases: updated });
+
+    get().addToast({
+      type: 'success',
+      title: 'Дело продублировано',
+      message: `Создана копия «${cloned.title}».`,
+    });
+  },
+
+  deleteCase: (caseId) => {
+    const { cases, activeCaseId } = get();
+    if (cases.length <= 1) {
+      get().addToast({
+        type: 'warning',
+        title: 'Нельзя удалить последнее дело',
+        message: 'В портфеле должно оставаться как минимум одно дело.',
+      });
+      return;
+    }
+
+    const filtered = cases.filter((c) => c.id !== caseId);
+    const newActiveId = activeCaseId === caseId ? filtered[0].id : activeCaseId;
+    const newActiveCase = filtered.find((c) => c.id === newActiveId) || filtered[0];
+
+    saveCasesToStorage(filtered, newActiveCase.id);
+
+    set({
+      cases: filtered,
+      activeCaseId: newActiveCase.id,
+      root: newActiveCase.root,
+      selectedId: newActiveCase.root.id,
+      history: [newActiveCase.root],
+      historyIndex: 0,
+    });
+
+    get().addToast({
+      type: 'success',
+      title: 'Дело удалено',
+      message: 'Дело успешно удалено из портфеля.',
+    });
+  },
+
+  promoteToNextInstance: (caseId, nextInstance) => {
+    const found = get().cases.find((c) => c.id === caseId);
+    if (!found) return;
+
+    let nextCourt = 'Апелляционный суд';
+    let instanceLabel = 'Апелляция';
+    let instanceBranchTitle = 'Основания апелляционного обжалования (ст. 270 АПК РФ)';
+
+    if (nextInstance === 'appellate') {
+      nextCourt = 'Девятый арбитражный апелляционный суд (9-й ААС)';
+      instanceLabel = 'Апелляция';
+      instanceBranchTitle = 'Основания апелляционной жалобы (ст. 270 АПК РФ)';
+    } else if (nextInstance === 'cassation') {
+      nextCourt = 'Арбитражный суд Московского округа (АС МО)';
+      instanceLabel = 'Кассация (Округ)';
+      instanceBranchTitle = 'Основания кассационной жалобы (ст. 288 АПК РФ)';
+    } else if (nextInstance === 'supreme') {
+      nextCourt = 'Верховный Суд Российской Федерации (СКЭС)';
+      instanceLabel = 'Верховный Суд РФ';
+      instanceBranchTitle = 'Основания передачи дела в СКЭС ВС РФ (ст. 291.11 АПК РФ)';
+    }
+
+    const clonedRoot = cloneTree(found.root);
+    // Add instance specific branch
+    const instanceBranch: MindNode = {
+      id: uid(),
+      title: instanceBranchTitle,
+      nodeType: 'thesis',
+      color: '#f43f5e',
+      priority: 'high',
+      notes: `Правовая аргументация для судебного заседания в инстанции: ${instanceLabel}`,
+      children: [
+        {
+          id: uid(),
+          title: 'Нарушение норм процессуального / материального права',
+          nodeType: 'thesis',
+          strengthScore: 5,
+        },
+      ],
+    };
+
+    clonedRoot.children = clonedRoot.children ? [instanceBranch, ...clonedRoot.children] : [instanceBranch];
+
+    const newCase: CaseItem = {
+      id: caseUid(),
+      title: `${instanceLabel}: ${found.title}`,
+      instance: nextInstance,
+      courtName: nextCourt,
+      status: 'appeal_pending',
+      root: clonedRoot,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    const newCases = [newCase, ...get().cases];
+    saveCasesToStorage(newCases, newCase.id);
+
+    set({
+      cases: newCases,
+      activeCaseId: newCase.id,
+      root: clonedRoot,
+      selectedId: clonedRoot.id,
+      history: [clonedRoot],
+      historyIndex: 0,
+    });
+
+    get().addToast({
+      type: 'success',
+      title: `Дело передано в инстанцию: ${instanceLabel}`,
+      message: `Создано новое производство в суде «${nextCourt}».`,
+    });
+  },
+
+  // Active Tree Node Actions
+  selectNode: (id) => set({ selectedId: id }),
+  startEditing: (id) => set({ editingId: id }),
+  stopEditing: () => set({ editingId: null }),
+
+  updateNode: (id, updates) => {
+    const newRoot = updateInTree(get().root, id, updates);
+    (get() as any)._pushHistory(newRoot);
+  },
+
+  addChildNode: (parentId, title = 'Новый блок', nodeType = 'general') => {
+    const parentNode = findNode(get().root, parentId);
+    const newNode: MindNode = {
+      id: uid(),
+      title,
+      nodeType,
+      color: parentNode?.color,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    const newRoot = addChildInTree(get().root, parentId, newNode);
+    (get() as any)._pushHistory(newRoot);
+    set({ selectedId: newNode.id, editingId: newNode.id });
+    get().addToast({
+      type: 'info',
+      title: 'Блок добавлен',
+      message: `Создан блок «${title}».`,
+      duration: 2000,
+    });
+  },
+
+  addSiblingNode: (siblingId, title = 'Новый блок', nodeType = 'general') => {
+    if (siblingId === get().root.id) {
+      get().addChildNode(siblingId, title, nodeType);
+      return;
+    }
+    const siblingNode = findNode(get().root, siblingId);
+    const newNode: MindNode = {
+      id: uid(),
+      title,
+      nodeType: nodeType || siblingNode?.nodeType || 'general',
+      color: siblingNode?.color,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    const newRoot = addSiblingInTree(get().root, siblingId, newNode);
+    (get() as any)._pushHistory(newRoot);
+    set({ selectedId: newNode.id, editingId: newNode.id });
+  },
+
+  deleteNode: (id) => {
+    if (id === get().root.id) {
+      get().addToast({
+        type: 'warning',
+        title: 'Нельзя удалить корневой блок дела',
+      });
+      return;
+    }
+    const targetNode = findNode(get().root, id);
+    const newRoot = deleteFromTree(get().root, id);
+    if (newRoot) {
+      (get() as any)._pushHistory(newRoot);
+      set({ selectedId: get().root.id });
+      get().addToast({
+        type: 'info',
+        title: 'Блок удален',
+        message: targetNode ? `Ветка «${targetNode.title}» удалена.` : undefined,
+      });
+    }
+  },
+
+  duplicateNode: (id) => {
+    const node = findNode(get().root, id);
+    if (!node || id === get().root.id) return;
+
+    // Helper to clone subtree with new IDs
+    function cloneWithNewIds(n: MindNode): MindNode {
+      return {
+        ...n,
+        id: uid(),
+        title: n.id === id ? `${n.title} (Копия)` : n.title,
+        children: n.children ? n.children.map(cloneWithNewIds) : undefined,
+      };
+    }
+
+    const cloned = cloneWithNewIds(node);
+    const newRoot = addSiblingInTree(get().root, id, cloned);
+    (get() as any)._pushHistory(newRoot);
+    set({ selectedId: cloned.id });
+    get().addToast({
+      type: 'success',
+      title: 'Ветка продублирована',
+    });
+  },
+
+  moveNode: (draggedId, targetParentId) => {
+    if (draggedId === targetParentId || draggedId === get().root.id) return;
+
+    const nodeToMove = findNode(get().root, draggedId);
+    if (!nodeToMove) return;
+
+    // Remove from old position
+    const treeWithoutNode = deleteFromTree(get().root, draggedId);
+    if (!treeWithoutNode) return;
+
+    // Add to target parent
+    const newRoot = addChildInTree(treeWithoutNode, targetParentId, nodeToMove);
+    (get() as any)._pushHistory(newRoot);
+    set({ selectedId: draggedId });
+    get().addToast({
+      type: 'info',
+      title: 'Блок перемещен',
+    });
+  },
+
+  toggleCollapse: (id) => {
+    const node = findNode(get().root, id);
+    if (!node) return;
+    const newRoot = updateInTree(get().root, id, { isCollapsed: !node.isCollapsed });
+    (get() as any)._pushHistory(newRoot);
   },
 
   collapseAll: () => {
-    const { root, past } = get();
-    const newPast = [...past.slice(-MAX_HISTORY_STEPS + 1), cloneTree(root)];
-    const newRoot = cloneTree(root);
-
-    function collapseRecursively(node: MindNode, depth: number) {
-      if (depth > 0 && node.children && node.children.length > 0) {
-        node.isCollapsed = true;
-      }
-      if (node.children) {
-        node.children.forEach((c) => collapseRecursively(c, depth + 1));
-      }
+    function collapseSubtree(n: MindNode): MindNode {
+      return {
+        ...n,
+        isCollapsed: n.id !== get().root.id,
+        children: n.children ? n.children.map(collapseSubtree) : undefined,
+      };
     }
-
-    collapseRecursively(newRoot, 0);
-    persistTree(newRoot);
-
-    set({
-      root: newRoot,
-      past: newPast,
-      future: [],
-    });
+    const newRoot = collapseSubtree(get().root);
+    (get() as any)._pushHistory(newRoot);
   },
 
   expandAll: () => {
-    const { root, past } = get();
-    const newPast = [...past.slice(-MAX_HISTORY_STEPS + 1), cloneTree(root)];
-    const newRoot = cloneTree(root);
-
-    function expandRecursively(node: MindNode) {
-      node.isCollapsed = false;
-      if (node.children) {
-        node.children.forEach(expandRecursively);
-      }
+    function expandSubtree(n: MindNode): MindNode {
+      return {
+        ...n,
+        isCollapsed: false,
+        children: n.children ? n.children.map(expandSubtree) : undefined,
+      };
     }
-
-    expandRecursively(newRoot);
-    persistTree(newRoot);
-
-    set({
-      root: newRoot,
-      past: newPast,
-      future: [],
-    });
-  },
-
-  moveNode: (nodeId, newParentId, insertIndex) => {
-    const { root, past } = get();
-    if (nodeId === root.id || nodeId === newParentId) return false;
-
-    const newRoot = cloneTree(root);
-    const nodeToMove = findNodeInTree(newRoot, nodeId);
-    if (!nodeToMove) return false;
-
-    if (findNodeInTree(nodeToMove, newParentId)) {
-      return false;
-    }
-
-    const oldParent = findParentInTree(newRoot, nodeId);
-    const newParent = findNodeInTree(newRoot, newParentId);
-    if (!oldParent || !oldParent.children || !newParent) return false;
-
-    const oldIndex = oldParent.children.findIndex((c) => c.id === nodeId);
-    if (oldIndex === -1) return false;
-
-    const newPast = [...past.slice(-MAX_HISTORY_STEPS + 1), cloneTree(root)];
-
-    const [extracted] = oldParent.children.splice(oldIndex, 1);
-
-    if (!newParent.children) newParent.children = [];
-    newParent.isCollapsed = false;
-
-    if (insertIndex !== undefined && insertIndex >= 0 && insertIndex <= newParent.children.length) {
-      newParent.children.splice(insertIndex, 0, extracted);
-    } else {
-      newParent.children.push(extracted);
-    }
-
-    persistTree(newRoot);
-
-    set({
-      root: newRoot,
-      past: newPast,
-      future: [],
-      selectedId: nodeId,
-    });
-
-    return true;
+    const newRoot = expandSubtree(get().root);
+    (get() as any)._pushHistory(newRoot);
   },
 
   loadTemplate: (templateId) => {
-    const found = CASE_TEMPLATES.find((t) => t.id === templateId);
-    if (!found) return;
-
-    const { root, past } = get();
-    const newPast = [...past.slice(-MAX_HISTORY_STEPS + 1), cloneTree(root)];
-    const templateTree = cloneTree(found.data);
-
-    persistTree(templateTree);
-
-    set({
-      root: templateTree,
-      past: newPast,
-      future: [],
-      selectedId: templateTree.id,
-      editingId: null,
-      isTemplatesOpen: false,
-    });
+    const template = CASE_TEMPLATES.find((t) => t.id === templateId);
+    if (template) {
+      const cloned = cloneTree(template.data);
+      (get() as any)._pushHistory(cloned);
+      set({ selectedId: cloned.id });
+      get().setTemplatesOpen(false);
+      get().addToast({
+        type: 'success',
+        title: 'Шаблон загружен',
+        message: `Загружена структура «${template.name}».`,
+      });
+    }
   },
 
-  importFromMarkdown: (markdown) => {
-    const { root, past } = get();
-    const newPast = [...past.slice(-MAX_HISTORY_STEPS + 1), cloneTree(root)];
-    const newTree = parseMarkdownToTree(markdown);
-
-    persistTree(newTree);
-
-    set({
-      root: newTree,
-      past: newPast,
-      future: [],
-      selectedId: newTree.id,
-      editingId: null,
-      isExportImportOpen: false,
-    });
+  importFromMarkdown: (markdown: string) => {
+    try {
+      const parsed = parseMarkdownToTree(markdown);
+      (get() as any)._pushHistory(parsed);
+      set({ selectedId: parsed.id });
+      get().setExportImportOpen(false);
+      get().addToast({
+        type: 'success',
+        title: 'Импорт завершен',
+        message: 'Структура из Markdown успешно импортирована.',
+      });
+    } catch {
+      get().addToast({
+        type: 'error',
+        title: 'Ошибка импорта',
+        message: 'Не удалось разобрать Markdown файл.',
+      });
+    }
   },
 
-  importFromJson: (jsonStr) => {
+  importFromJson: (jsonStr: string) => {
     try {
       const parsed = JSON.parse(jsonStr);
-      if (!parsed || !parsed.id || !parsed.title) {
-        return false;
+      if (parsed && parsed.id && parsed.title) {
+        (get() as any)._pushHistory(parsed);
+        set({ selectedId: parsed.id });
+        get().setExportImportOpen(false);
+        get().addToast({
+          type: 'success',
+          title: 'Импорт завершен',
+          message: 'Структура из JSON успешно импортирована.',
+        });
+        return true;
       }
-      const { root, past } = get();
-      const newPast = [...past.slice(-MAX_HISTORY_STEPS + 1), cloneTree(root)];
-
-      persistTree(parsed);
-
-      set({
-        root: parsed,
-        past: newPast,
-        future: [],
-        selectedId: parsed.id,
-        editingId: null,
-        isExportImportOpen: false,
+      return false;
+    } catch {
+      get().addToast({
+        type: 'error',
+        title: 'Ошибка импорта',
+        message: 'Некорректный формат JSON файла.',
       });
-      return true;
-    } catch (err) {
-      console.error('Invalid JSON import', err);
       return false;
     }
   },
 
   resetToDefault: () => {
-    const { root, past } = get();
-    const newPast = [...past.slice(-MAX_HISTORY_STEPS + 1), cloneTree(root)];
-    const defaultTree = cloneTree(INITIAL_MIND_MAP);
-
-    persistTree(defaultTree);
-
-    set({
-      root: defaultTree,
-      past: newPast,
-      future: [],
-      selectedId: defaultTree.id,
-      editingId: null,
+    (get() as any)._pushHistory(INITIAL_MIND_MAP);
+    set({ selectedId: INITIAL_MIND_MAP.id });
+    get().addToast({
+      type: 'info',
+      title: 'Схема сброшена',
+      message: 'Загружена стандартная структура арбитражного спора.',
     });
   },
 
+  setRoot: (newRoot) => {
+    (get() as any)._pushHistory(newRoot);
+    set({ selectedId: newRoot.id });
+  },
+
+  // Undo / Redo
   undo: () => {
-    const { past, root, future } = get();
-    if (past.length === 0) return;
-
-    const previous = past[past.length - 1];
-    const newPast = past.slice(0, past.length - 1);
-    const newFuture = [cloneTree(root), ...future.slice(0, MAX_HISTORY_STEPS - 1)];
-
-    persistTree(previous);
-
-    set({
-      root: previous,
-      past: newPast,
-      future: newFuture,
-      editingId: null,
-    });
+    const { history, historyIndex, cases, activeCaseId } = get();
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      const newRoot = history[newIndex];
+      const updatedCases = cases.map((c) =>
+        c.id === activeCaseId ? { ...c, root: newRoot, updatedAt: Date.now() } : c
+      );
+      saveCasesToStorage(updatedCases, activeCaseId);
+      set({
+        root: newRoot,
+        historyIndex: newIndex,
+        selectedId: newRoot.id,
+        cases: updatedCases,
+      });
+    }
   },
 
   redo: () => {
-    const { past, root, future } = get();
-    if (future.length === 0) return;
-
-    const next = future[0];
-    const newFuture = future.slice(1);
-    const newPast = [...past.slice(-MAX_HISTORY_STEPS + 1), cloneTree(root)];
-
-    persistTree(next);
-
-    set({
-      root: next,
-      past: newPast,
-      future: newFuture,
-      editingId: null,
-    });
+    const { history, historyIndex, cases, activeCaseId } = get();
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      const newRoot = history[newIndex];
+      const updatedCases = cases.map((c) =>
+        c.id === activeCaseId ? { ...c, root: newRoot, updatedAt: Date.now() } : c
+      );
+      saveCasesToStorage(updatedCases, activeCaseId);
+      set({
+        root: newRoot,
+        historyIndex: newIndex,
+        selectedId: newRoot.id,
+        cases: updatedCases,
+      });
+    }
   },
 
-  canUndo: () => get().past.length > 0,
-  canRedo: () => get().future.length > 0,
+  canUndo: () => get().historyIndex > 0,
+  canRedo: () => get().historyIndex < get().history.length - 1,
 
-  setFilterNodeType: (type) => set({ filterNodeType: type }),
-  setSearchQuery: (query) => set({ searchQuery: query }),
-  setSearchOpen: (open) => set({ isSearchOpen: open, searchQuery: open ? get().searchQuery : '' }),
-  setExportImportOpen: (open) => set({ isExportImportOpen: open }),
-  setShortcutsOpen: (open) => set({ isShortcutsOpen: open }),
-  setSidebarOpen: (open) => set({ isSidebarOpen: open }),
-  toggleSidebar: () => set((s) => ({ isSidebarOpen: !s.isSidebarOpen })),
-  setTimelineOpen: (open) => set({ isTimelineOpen: open }),
-  setCourtDocOpen: (open) => set({ isCourtDocOpen: open }),
-  setShareOpen: (open) => set({ isShareOpen: open }),
-  setTemplatesOpen: (open) => set({ isTemplatesOpen: open }),
+  // Toast System
+  addToast: (toast) => {
+    const id = toastUid();
+    const newToast: ToastMessage = { ...toast, id };
+    set((state) => ({ toasts: [...state.toasts, newToast] }));
+
+    setTimeout(() => {
+      get().removeToast(id);
+    }, toast.duration || 3500);
+  },
+
+  removeToast: (id) => {
+    set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }));
+  },
+
+  // In-app Confirm Dialog System
+  openConfirmDialog: (config) => {
+    set({ confirmDialog: { ...config, isOpen: true } });
+  },
+
+  closeConfirmDialog: () => {
+    set((state) => ({ confirmDialog: { ...state.confirmDialog, isOpen: false } }));
+  },
+
+  // Modal Toggles
+  setSidebarOpen: (isSidebarOpen) => set({ isSidebarOpen }),
+  toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
+  setSearchOpen: (isSearchOpen) => set({ isSearchOpen }),
+  setExportImportOpen: (isExportImportOpen) => set({ isExportImportOpen }),
+  setShortcutsOpen: (isShortcutsOpen) => set({ isShortcutsOpen }),
+  setTimelineOpen: (isTimelineOpen) => set({ isTimelineOpen }),
+  setCourtDocOpen: (isCourtDocOpen) => set({ isCourtDocOpen }),
+  setShareOpen: (isShareOpen) => set({ isShareOpen }),
+  setTemplatesOpen: (isTemplatesOpen) => set({ isTemplatesOpen }),
+  setPortfolioOpen: (isPortfolioOpen) => set({ isPortfolioOpen }),
+  setNewCaseOpen: (isNewCaseOpen) => set({ isNewCaseOpen }),
 }));

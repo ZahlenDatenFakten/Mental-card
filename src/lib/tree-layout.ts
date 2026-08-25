@@ -115,21 +115,15 @@ function computeSubtreeHeights(
     };
   }
 
-  // Calculate children layouts
-  const layoutChildren: IntermediateLayoutNode[] = [];
-  let childrenTotalHeight = 0;
-
-  node.children.forEach((child, index) => {
-    const childColor = depth === 0 ? getBranchColor(index, child.color) : (child.color || nodeColor);
-    const childLayout = computeSubtreeHeights(child, depth + 1, node.id, childColor);
-    layoutChildren.push(childLayout);
-    childrenTotalHeight += childLayout.subtreeHeight;
+  // Compute children subtrees with distinct branch colors for depth 1
+  const children: IntermediateLayoutNode[] = node.children.map((child, index) => {
+    const branchColor = depth === 0 ? getBranchColor(index) : nodeColor;
+    return computeSubtreeHeights(child, depth + 1, node.id, branchColor);
   });
 
-  // Add vertical gaps between siblings
-  if (layoutChildren.length > 1) {
-    childrenTotalHeight += (layoutChildren.length - 1) * VERTICAL_GAP;
-  }
+  const childrenTotalHeight =
+    children.reduce((sum, child) => sum + child.subtreeHeight, 0) +
+    (children.length - 1) * VERTICAL_GAP;
 
   const subtreeHeight = Math.max(height, childrenTotalHeight);
 
@@ -141,8 +135,8 @@ function computeSubtreeHeights(
     width,
     height,
     depth,
-    isCollapsed,
-    collapsedCount,
+    isCollapsed: false,
+    collapsedCount: 0,
     color: node.color || inheritedColor,
     notes: node.notes,
     url: node.url,
@@ -159,7 +153,7 @@ function computeSubtreeHeights(
     strengthScore: node.strengthScore,
     opponentStance: node.opponentStance,
     citation: node.citation,
-    children: layoutChildren,
+    children,
     parentId,
     isRoot,
     subtreeHeight,
@@ -167,90 +161,106 @@ function computeSubtreeHeights(
 }
 
 /**
- * Second pass (Top-Down): Assigns absolute (x, y) coordinates to each node.
+ * Second pass (Top-Down): Assigns exact (x, y) coordinates.
  */
 function assignCoordinates(
   node: IntermediateLayoutNode,
   currentX: number,
-  centerY: number,
+  currentY: number,
   nodeMap: Map<NodeId, LayoutNode>,
   connections: ConnectionLine[],
   selectedId: NodeId | null
 ) {
   node.x = currentX;
-  node.y = Math.round(centerY - node.height / 2);
+  node.y = currentY;
 
+  // Add to lookup map
   nodeMap.set(node.id, node);
 
-  if (node.children.length === 0) {
+  if (node.isCollapsed || node.children.length === 0) {
     return;
   }
 
-  // Compute children total bounding height
-  let totalChildrenHeight = 0;
-  node.children.forEach((child) => {
-    totalChildrenHeight += (child as IntermediateLayoutNode).subtreeHeight;
-  });
-  if (node.children.length > 1) {
-    totalChildrenHeight += (node.children.length - 1) * VERTICAL_GAP;
-  }
+  // Calculate starting Y position for children
+  const childrenTotalHeight =
+    node.children.reduce((sum, child) => sum + (child as IntermediateLayoutNode).subtreeHeight, 0) +
+    (node.children.length - 1) * VERTICAL_GAP;
 
-  let childStartY = centerY - totalChildrenHeight / 2;
+  let childYCursor = currentY + node.height / 2 - childrenTotalHeight / 2;
   const childX = currentX + node.width + HORIZONTAL_GAP;
-  const parentAnchorX = node.x + node.width;
-  const parentAnchorY = node.y + node.height / 2;
 
-  node.children.forEach((child) => {
-    const intermediateChild = child as IntermediateLayoutNode;
-    const childCenterY = childStartY + intermediateChild.subtreeHeight / 2;
-    
-    // Assign coords to child and its descendants
-    assignCoordinates(intermediateChild, childX, childCenterY, nodeMap, connections, selectedId);
+  for (const child of node.children as IntermediateLayoutNode[]) {
+    const childNodeY = childYCursor + child.subtreeHeight / 2 - child.height / 2;
 
-    // Create cubic Bezier connector
-    const childAnchorX = intermediateChild.x;
-    const childAnchorY = intermediateChild.y + intermediateChild.height / 2;
+    // Source anchor: middle-right of parent node
+    const startX = currentX + node.width;
+    const startY = currentY + node.height / 2;
 
-    const isLineActive = selectedId === node.id || selectedId === intermediateChild.id;
+    // Target anchor: middle-left of child node
+    const endX = childX;
+    const endY = childNodeY + child.height / 2;
+
+    // Generate Bezier path
+    const path = generateBezierPath(startX, startY, endX, endY);
+
+    const isConnectionActive = selectedId === node.id || selectedId === child.id;
 
     connections.push({
-      id: `conn-${node.id}-${intermediateChild.id}`,
+      id: `conn-${node.id}-${child.id}`,
       sourceId: node.id,
-      targetId: intermediateChild.id,
-      startX: parentAnchorX,
-      startY: parentAnchorY,
-      endX: childAnchorX,
-      endY: childAnchorY,
-      path: generateBezierPath(parentAnchorX, parentAnchorY, childAnchorX, childAnchorY),
-      color: intermediateChild.color,
-      isActive: isLineActive,
+      targetId: child.id,
+      startX,
+      startY,
+      endX,
+      endY,
+      path,
+      color: child.color,
+      isActive: isConnectionActive,
     });
 
-    childStartY += intermediateChild.subtreeHeight + VERTICAL_GAP;
-  });
+    assignCoordinates(
+      child,
+      childX,
+      childNodeY,
+      nodeMap,
+      connections,
+      selectedId
+    );
+
+    childYCursor += child.subtreeHeight + VERTICAL_GAP;
+  }
 }
 
 /**
- * Main layout calculation entry point.
+ * Calculates complete tree layout with node bounds and statistics.
  */
 export function calculateTreeLayout(
-  rootNode: MindNode,
+  root: MindNode,
   selectedId: NodeId | null = null
 ): CalculatedLayout {
-  const intermediateRoot = computeSubtreeHeights(rootNode, 0, null);
+  const intermediateRoot = computeSubtreeHeights(root, 0, null);
+
   const nodeMap = new Map<NodeId, LayoutNode>();
   const connections: ConnectionLine[] = [];
 
-  // Start root node at origin (0, 0)
-  assignCoordinates(intermediateRoot, 0, 0, nodeMap, connections, selectedId);
+  // Center root node vertically at 0
+  assignCoordinates(
+    intermediateRoot,
+    0,
+    -intermediateRoot.height / 2,
+    nodeMap,
+    connections,
+    selectedId
+  );
 
-  // Compute overall bounding box and statistics
+  // Compute bounding box and stats
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
   let maxY = -Infinity;
-  let maxDepth = 0;
+
   let totalNodes = 0;
+  let maxDepth = 0;
   let collapsedNodes = 0;
   let thesesCount = 0;
   let evidenceCount = 0;
@@ -258,23 +268,23 @@ export function calculateTreeLayout(
   let eventsCount = 0;
   let risksCount = 0;
 
-  function traverseStats(node: LayoutNode) {
+  function traverseStats(n: LayoutNode) {
     totalNodes++;
-    if (node.isCollapsed) collapsedNodes++;
-    if (node.depth > maxDepth) maxDepth = node.depth;
+    maxDepth = Math.max(maxDepth, n.depth);
+    if (n.isCollapsed) collapsedNodes += n.collapsedCount;
 
-    if (node.nodeType === 'thesis') thesesCount++;
-    else if (node.nodeType === 'evidence' || node.casePages) evidenceCount++;
-    else if (node.nodeType === 'norm' || node.lawArticle) normsCount++;
-    else if (node.nodeType === 'fact_timeline' || node.eventDate) eventsCount++;
-    else if (node.nodeType === 'risk' || node.nodeType === 'counter_arg') risksCount++;
+    if (n.nodeType === 'thesis') thesesCount++;
+    if (n.nodeType === 'evidence') evidenceCount++;
+    if (n.nodeType === 'norm') normsCount++;
+    if (n.nodeType === 'fact_timeline') eventsCount++;
+    if (n.nodeType === 'risk') risksCount++;
 
-    minX = Math.min(minX, node.x);
-    minY = Math.min(minY, node.y);
-    maxX = Math.max(maxX, node.x + node.width);
-    maxY = Math.max(maxY, node.y + node.height);
+    minX = Math.min(minX, n.x);
+    minY = Math.min(minY, n.y);
+    maxX = Math.max(maxX, n.x + n.width);
+    maxY = Math.max(maxY, n.y + n.height);
 
-    for (const child of node.children) {
+    for (const child of n.children) {
       traverseStats(child);
     }
   }
@@ -308,6 +318,55 @@ export function calculateTreeLayout(
     boundingBox,
     stats,
   };
+}
+
+/**
+ * Finds parent node ID in a layout tree.
+ */
+export function findParentNodeId(root: LayoutNode, targetId: NodeId): NodeId | null {
+  if (root.id === targetId) return null;
+  for (const child of root.children) {
+    if (child.id === targetId) return root.id;
+    const found = findParentNodeId(child, targetId);
+    if (found) return found;
+  }
+  return null;
+}
+
+/**
+ * Finds sibling node ID in a layout tree.
+ */
+export function findSiblingNodeId(
+  root: LayoutNode,
+  targetId: NodeId,
+  direction: 'next' | 'prev'
+): NodeId | null {
+  if (root.id === targetId) return null;
+  const parentId = findParentNodeId(root, targetId);
+  if (!parentId) return null;
+
+  function findNode(n: LayoutNode, id: NodeId): LayoutNode | null {
+    if (n.id === id) return n;
+    for (const c of n.children) {
+      const res = findNode(c, id);
+      if (res) return res;
+    }
+    return null;
+  }
+
+  const parent = findNode(root, parentId);
+  if (!parent || !parent.children) return null;
+
+  const idx = parent.children.findIndex((c) => c.id === targetId);
+  if (idx === -1) return null;
+
+  if (direction === 'next' && idx < parent.children.length - 1) {
+    return parent.children[idx + 1].id;
+  }
+  if (direction === 'prev' && idx > 0) {
+    return parent.children[idx - 1].id;
+  }
+  return null;
 }
 
 /**

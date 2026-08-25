@@ -2,6 +2,19 @@ export type NodeId = string;
 
 export type PriorityLevel = 'low' | 'medium' | 'high';
 
+export type JudicialInstance =
+  | 'first_instance' // 1-я инстанция (Районный суд / АС субъекта РФ)
+  | 'appellate'      // Апелляционная инстанция (Апелляционный арбитражный суд / Апелляционный суд СОЮ)
+  | 'cassation'      // Окружная / Кассационная инстанция (Арбитражный суд округа / Кассационный суд СОЮ)
+  | 'supreme';       // Верховная инстанция (СКЭС ВС РФ / Президиум ВС РФ)
+
+export type CaseStatus =
+  | 'in_progress'    // В производстве
+  | 'won'            // Удовлетворено / В нашу пользу
+  | 'lost'           // Отказано / Не в нашу пользу
+  | 'settled'        // Мировое соглашение
+  | 'appeal_pending';// На обжаловании
+
 export type LegalNodeType =
   | 'thesis'        // Тезис / Позиция стороны
   | 'fact_timeline' // Событие хронологии / Факт фабулы дела
@@ -139,4 +152,39 @@ export interface CaseTemplate {
   category: string;
   description: string;
   data: MindNode;
+}
+
+export interface CaseItem {
+  id: string;
+  title: string;                 // Номер дела или стороны спора
+  instance: JudicialInstance;    // 1-я, Апелляция, Окружная/Кассация, ВС РФ
+  courtName: string;             // Наименование суда
+  judge?: string;                // ФИО судьи / докладчика
+  caseNumber?: string;           // Официальный шифр дела (А40-..., 09АП-...)
+  status: CaseStatus;            // Статус процесса
+  description?: string;          // Краткая фабула спора
+  root: MindNode;                // Дерево правовой позиции
+  createdAt: number;
+  updatedAt: number;
+}
+
+export type ToastType = 'success' | 'error' | 'info' | 'warning';
+
+export interface ToastMessage {
+  id: string;
+  type: ToastType;
+  title: string;
+  message?: string;
+  duration?: number;
+}
+
+export interface ConfirmDialogConfig {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  variant?: 'danger' | 'primary' | 'warning';
+  onConfirm: () => void;
+  onCancel?: () => void;
 }

@@ -9,10 +9,14 @@ import { TimelineModal } from './components/panels/TimelineModal';
 import { CourtDocModal } from './components/panels/CourtDocModal';
 import { ShareModal } from './components/panels/ShareModal';
 import { TemplatesModal } from './components/panels/TemplatesModal';
+import { CasePortfolioModal } from './components/panels/CasePortfolioModal';
+import { NewCaseModal } from './components/panels/NewCaseModal';
+import { ToastContainer } from './components/ui/ToastContainer';
+import { ConfirmDialog } from './components/ui/ConfirmDialog';
 
 export const App: React.FC = () => {
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-background font-sans text-zinc-100 flex flex-col">
+    <div className="relative w-screen h-screen overflow-hidden bg-background font-sans text-zinc-100 flex flex-col antialiased">
       {/* Top Judicial Header & Navigation Controls */}
       <TopNavigation />
 
@@ -42,8 +46,20 @@ export const App: React.FC = () => {
       {/* Case Templates Gallery Modal */}
       <TemplatesModal />
 
+      {/* Case Portfolio Registry Modal */}
+      <CasePortfolioModal />
+
+      {/* New Case Creation Modal */}
+      <NewCaseModal />
+
       {/* Keyboard Shortcuts Reference Dialog (?) */}
       <ShortcutsDialog />
+
+      {/* In-App Floating Toast Notifications */}
+      <ToastContainer />
+
+      {/* In-App Custom Styled Confirm Dialog */}
+      <ConfirmDialog />
     </div>
   );
 };

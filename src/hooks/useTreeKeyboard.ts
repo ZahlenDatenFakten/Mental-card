@@ -1,13 +1,17 @@
 import { useEffect } from 'react';
+import { CalculatedLayout, NodeId } from '../types/mindmap';
 import { useMindMapStore } from '../store/useMindMapStore';
-import { CalculatedLayout, LayoutNode } from '../types/mindmap';
+import { findSiblingNodeId, findParentNodeId } from '../lib/tree-layout';
 
 interface UseTreeKeyboardProps {
   layout: CalculatedLayout;
-  onCenterSelected?: (nodeId: string) => void;
+  onCenterSelected?: (nodeId: NodeId) => void;
 }
 
-export function useTreeKeyboard({ layout, onCenterSelected }: UseTreeKeyboardProps) {
+export function useTreeKeyboard({
+  layout,
+  onCenterSelected,
+}: UseTreeKeyboardProps) {
   const {
     selectedId,
     editingId,
@@ -21,72 +25,55 @@ export function useTreeKeyboard({ layout, onCenterSelected }: UseTreeKeyboardPro
     undo,
     redo,
     setSearchOpen,
-    setShortcutsOpen,
     toggleSidebar,
   } = useMindMapStore();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept if actively typing in an input, textarea, or contentEditable
       const target = e.target as HTMLElement;
-      const isInputActive =
+      const isInput =
         target.tagName === 'INPUT' ||
         target.tagName === 'TEXTAREA' ||
         target.isContentEditable ||
-        Boolean(editingId);
+        target.closest('input, textarea, [contenteditable="true"]');
 
-      // Global shortcuts (available even or especially when interacting)
-      const isMeta = e.metaKey || e.ctrlKey;
-
-      // Undo / Redo
-      if (isMeta && (e.key === 'z' || e.key === 'Z' || e.key === 'я' || e.key === 'Я')) {
-        if (!isInputActive || editingId) {
+      if (isInput) {
+        // Allow ESC to cancel inline editing
+        if (e.key === 'Escape' && editingId) {
           e.preventDefault();
-          if (e.shiftKey) {
-            redo();
-          } else {
-            undo();
-          }
-          return;
+          stopEditing();
         }
+        return;
       }
 
-      if (isMeta && (e.key === 'y' || e.key === 'Y' || e.key === 'н' || e.key === 'Н')) {
-        if (!isInputActive) {
+      // Global App Shortcuts (Ctrl / Cmd + Key)
+      const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+
+      if (isCmdOrCtrl) {
+        // Ctrl+Z -> Undo
+        if (e.key === 'z' && !e.shiftKey) {
+          e.preventDefault();
+          undo();
+          return;
+        }
+        // Ctrl+Shift+Z or Ctrl+Y -> Redo
+        if ((e.key === 'z' && e.shiftKey) || e.key === 'y') {
           e.preventDefault();
           redo();
           return;
         }
-      }
-
-      // Quick search (Ctrl+F / Cmd+F)
-      if (isMeta && (e.key === 'f' || e.key === 'F' || e.key === 'а' || e.key === 'А')) {
-        e.preventDefault();
-        setSearchOpen(true);
-        return;
-      }
-
-      // Shortcuts cheat sheet (? or F1)
-      if ((e.key === '?' || e.key === 'F1') && !isInputActive) {
-        e.preventDefault();
-        setShortcutsOpen(true);
-        return;
-      }
-
-      // Toggle inspector sidebar (Cmd/Ctrl + B or I)
-      if (isMeta && (e.key === 'b' || e.key === 'i' || e.key === 'и' || e.key === 'ш')) {
-        e.preventDefault();
-        toggleSidebar();
-        return;
-      }
-
-      // If user is typing in an input (except our specific navigation commands), allow default
-      if (isInputActive) {
-        if (e.key === 'Escape') {
+        // Ctrl+F -> Search Modal
+        if (e.key === 'f') {
           e.preventDefault();
-          stopEditing();
-        } else if (e.key === 'Enter' && !e.shiftKey) {
+          setSearchOpen(true);
+          return;
+        }
+        // Ctrl+B -> Toggle Sidebar
+        if (e.key === 'b') {
           e.preventDefault();
-          stopEditing();
+          toggleSidebar();
+          return;
         }
         return;
       }
@@ -101,9 +88,9 @@ export function useTreeKeyboard({ layout, onCenterSelected }: UseTreeKeyboardPro
         // TAB -> Add child node and start editing
         case 'Tab': {
           e.preventDefault();
-          const newId = addChildNode(selectedId);
-          if (newId && onCenterSelected) {
-            onCenterSelected(newId);
+          addChildNode(selectedId);
+          if (onCenterSelected) {
+            onCenterSelected(selectedId);
           }
           break;
         }
@@ -113,11 +100,11 @@ export function useTreeKeyboard({ layout, onCenterSelected }: UseTreeKeyboardPro
           e.preventDefault();
           if (currentNode.isRoot) {
             // Root can only have children
-            const newId = addChildNode(currentNode.id);
-            if (newId && onCenterSelected) onCenterSelected(newId);
+            addChildNode(currentNode.id);
+            if (onCenterSelected) onCenterSelected(currentNode.id);
           } else {
-            const newId = addSiblingNode(selectedId);
-            if (newId && onCenterSelected) onCenterSelected(newId);
+            addSiblingNode(selectedId);
+            if (onCenterSelected) onCenterSelected(selectedId);
           }
           break;
         }
@@ -139,21 +126,11 @@ export function useTreeKeyboard({ layout, onCenterSelected }: UseTreeKeyboardPro
           break;
         }
 
-        // Arrow Left -> Go to parent node or collapse branch
-        case 'ArrowLeft': {
-          e.preventDefault();
-          if (!currentNode.isRoot && currentNode.parentId) {
-            selectNode(currentNode.parentId);
-            if (onCenterSelected) onCenterSelected(currentNode.parentId);
-          }
-          break;
-        }
-
-        // Arrow Right -> Go to first child or expand branch
+        // Arrow Right -> Move to first child
         case 'ArrowRight': {
           e.preventDefault();
           if (currentNode.isCollapsed) {
-            toggleCollapse(currentNode.id);
+            toggleCollapse(selectedId);
           } else if (currentNode.children.length > 0) {
             const firstChild = currentNode.children[0];
             selectNode(firstChild.id);
@@ -162,59 +139,75 @@ export function useTreeKeyboard({ layout, onCenterSelected }: UseTreeKeyboardPro
           break;
         }
 
-        // Arrow Up -> Go to previous sibling or upper neighbor
-        case 'ArrowUp': {
+        // Arrow Left -> Move to parent
+        case 'ArrowLeft': {
           e.preventDefault();
-          if (currentNode.parentId) {
-            const parent = layout.nodeMap.get(currentNode.parentId);
-            if (parent && parent.children.length > 0) {
-              const idx = parent.children.findIndex((c: LayoutNode) => c.id === currentNode.id);
-              if (idx > 0) {
-                const prevSibling = parent.children[idx - 1];
-                selectNode(prevSibling.id);
-                if (onCenterSelected) onCenterSelected(prevSibling.id);
-              }
+          if (!currentNode.isCollapsed && currentNode.children.length > 0 && !currentNode.isRoot) {
+            toggleCollapse(selectedId);
+          } else {
+            const parentId = findParentNodeId(layout.root, selectedId);
+            if (parentId) {
+              selectNode(parentId);
+              if (onCenterSelected) onCenterSelected(parentId);
             }
           }
           break;
         }
 
-        // Arrow Down -> Go to next sibling or lower neighbor
+        // Arrow Down -> Move to next sibling
         case 'ArrowDown': {
           e.preventDefault();
-          if (currentNode.parentId) {
-            const parent = layout.nodeMap.get(currentNode.parentId);
-            if (parent && parent.children.length > 0) {
-              const idx = parent.children.findIndex((c: LayoutNode) => c.id === currentNode.id);
-              if (idx < parent.children.length - 1) {
-                const nextSibling = parent.children[idx + 1];
-                selectNode(nextSibling.id);
-                if (onCenterSelected) onCenterSelected(nextSibling.id);
-              }
-            }
+          const nextSiblingId = findSiblingNodeId(layout.root, selectedId, 'next');
+          if (nextSiblingId) {
+            selectNode(nextSiblingId);
+            if (onCenterSelected) onCenterSelected(nextSiblingId);
           }
           break;
         }
 
-        // Toggle collapse [ or ] or Space
-        case '[':
-        case ']': {
-          if (currentNode.children.length > 0) {
+        // Arrow Up -> Move to previous sibling
+        case 'ArrowUp': {
+          e.preventDefault();
+          const prevSiblingId = findSiblingNodeId(layout.root, selectedId, 'prev');
+          if (prevSiblingId) {
+            selectNode(prevSiblingId);
+            if (onCenterSelected) onCenterSelected(prevSiblingId);
+          }
+          break;
+        }
+
+        // Space -> Toggle collapse
+        case ' ': {
+          if (currentNode.children.length > 0 || currentNode.collapsedCount > 0) {
             e.preventDefault();
-            toggleCollapse(currentNode.id);
+            toggleCollapse(selectedId);
+          }
+          break;
+        }
+
+        // [ -> Collapse node
+        case '[': {
+          if (!currentNode.isCollapsed && currentNode.children.length > 0) {
+            e.preventDefault();
+            toggleCollapse(selectedId);
+          }
+          break;
+        }
+
+        // ] -> Expand node
+        case ']': {
+          if (currentNode.isCollapsed) {
+            e.preventDefault();
+            toggleCollapse(selectedId);
           }
           break;
         }
 
         // Escape -> Deselect node
         case 'Escape': {
-          e.preventDefault();
           selectNode(null);
           break;
         }
-
-        default:
-          break;
       }
     };
 
@@ -234,7 +227,6 @@ export function useTreeKeyboard({ layout, onCenterSelected }: UseTreeKeyboardPro
     undo,
     redo,
     setSearchOpen,
-    setShortcutsOpen,
     toggleSidebar,
     onCenterSelected,
   ]);

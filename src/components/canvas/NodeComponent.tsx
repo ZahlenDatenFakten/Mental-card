@@ -51,7 +51,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
   const [editText, setEditText] = useState(node.title);
   const [isDragOver, setIsDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { updateNode, duplicateNode, setSidebarOpen, filterNodeType } = useMindMapStore();
+  const { updateNode, duplicateNode, setSidebarOpen, filterNodeType, openConfirmDialog } = useMindMapStore();
 
   useEffect(() => {
     setEditText(node.title);
@@ -83,6 +83,19 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
       setEditText(node.title);
       onStopEdit();
     }
+  };
+
+  const handleDeleteWithConfirm = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    openConfirmDialog({
+      title: 'Удалить юридический блок?',
+      message: `Удалить блок «${node.title}» и все дочерние материалы?`,
+      confirmLabel: 'Удалить',
+      variant: 'danger',
+      onConfirm: () => {
+        onDelete(node.id);
+      },
+    });
   };
 
   const hasChildren = node.children.length > 0 || node.collapsedCount > 0;
@@ -365,7 +378,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
             onAddChild(node.id);
           }}
           title="Добавить дочерний элемент (Tab)"
-          className="flex items-center justify-center w-6 h-6 bg-zinc-800/90 hover:bg-emerald-600 text-zinc-300 hover:text-white rounded-md border border-zinc-700 shadow-md transition-colors"
+          className="flex items-center justify-center w-6 h-6 bg-zinc-800/90 hover:bg-emerald-600 text-zinc-300 hover:text-white rounded-md border border-zinc-700 shadow-md transition-colors cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" />
         </button>
@@ -377,7 +390,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
             onStartEdit(node.id);
           }}
           title="Редактировать текст (F2)"
-          className="flex items-center justify-center w-6 h-6 bg-zinc-800/90 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-md border border-zinc-700 shadow-md transition-colors"
+          className="flex items-center justify-center w-6 h-6 bg-zinc-800/90 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-md border border-zinc-700 shadow-md transition-colors cursor-pointer"
         >
           <Edit3 className="w-3 h-3" />
         </button>
@@ -390,21 +403,18 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
               duplicateNode(node.id);
             }}
             title="Дублировать ветку"
-            className="flex items-center justify-center w-6 h-6 bg-zinc-800/90 hover:bg-violet-600 text-zinc-300 hover:text-white rounded-md border border-zinc-700 shadow-md transition-colors"
+            className="flex items-center justify-center w-6 h-6 bg-zinc-800/90 hover:bg-violet-600 text-zinc-300 hover:text-white rounded-md border border-zinc-700 shadow-md transition-colors cursor-pointer"
           >
             <Copy className="w-3 h-3" />
           </button>
         )}
 
-        {/* Delete Node (Non-root) */}
+        {/* Delete Node (Non-root) with custom In-App Confirm Dialog */}
         {!isRoot && (
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(node.id);
-            }}
+            onClick={handleDeleteWithConfirm}
             title="Удалить узел со всем поддеревом (Del)"
-            className="flex items-center justify-center w-6 h-6 bg-zinc-800/90 hover:bg-rose-600 text-zinc-400 hover:text-white rounded-md border border-zinc-700 shadow-md transition-colors"
+            className="flex items-center justify-center w-6 h-6 bg-zinc-800/90 hover:bg-rose-600 text-zinc-400 hover:text-white rounded-md border border-zinc-700 shadow-md transition-colors cursor-pointer"
           >
             <Trash2 className="w-3 h-3" />
           </button>

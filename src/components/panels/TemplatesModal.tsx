@@ -16,6 +16,7 @@ export const TemplatesModal: React.FC = () => {
     isTemplatesOpen,
     setTemplatesOpen,
     loadTemplate,
+    openConfirmDialog,
   } = useMindMapStore();
 
   if (!isTemplatesOpen) return null;
@@ -33,10 +34,16 @@ export const TemplatesModal: React.FC = () => {
     }
   };
 
-  const handleSelectTemplate = (templateId: string) => {
-    if (window.confirm('Загрузить выбранный шаблон дела? Текущие несохраненные данные будут заменены (вы сможете отменить действие через Ctrl+Z).')) {
-      loadTemplate(templateId);
-    }
+  const handleSelectTemplate = (templateId: string, templateName: string) => {
+    openConfirmDialog({
+      title: 'Загрузить процессуальный шаблон?',
+      message: `Загрузка шаблона «${templateName}» заменит текущую схему активного дела. Вы сможете отменить действие через Ctrl+Z.`,
+      confirmLabel: 'Загрузить шаблон',
+      variant: 'primary',
+      onConfirm: () => {
+        loadTemplate(templateId);
+      },
+    });
   };
 
   return (
@@ -77,7 +84,7 @@ export const TemplatesModal: React.FC = () => {
           {CASE_TEMPLATES.map((tmpl) => (
             <div
               key={tmpl.id}
-              onClick={() => handleSelectTemplate(tmpl.id)}
+              onClick={() => handleSelectTemplate(tmpl.id, tmpl.name)}
               className="p-4 bg-zinc-900/70 hover:bg-zinc-850 border border-zinc-800 hover:border-zinc-700 rounded-xl transition-all flex flex-col justify-between group cursor-pointer shadow-sm hover:shadow-md"
             >
               <div className="space-y-2">
