@@ -106,9 +106,9 @@ export const ProjectsHub: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setNewCaseOpen(true)}
-            className="flex items-center gap-2 px-4.5 py-2.5 text-xs font-semibold apple-btn-green rounded-xl transition-all cursor-pointer shadow-apple-card active:scale-[0.95]"
+            className="flex items-center gap-2.5 px-6 py-2.5 text-sm font-semibold apple-btn-green rounded-2xl transition-all cursor-pointer shadow-apple-card active:scale-[0.95] whitespace-nowrap min-h-[42px]"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 flex-shrink-0" />
             <span>Новое судебное дело</span>
           </button>
         </div>
