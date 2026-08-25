@@ -13,8 +13,8 @@ import { INITIAL_CASES, INITIAL_MIND_MAP, CASE_TEMPLATES } from '../lib/sample-d
 import { loadSharedCaseFromUrl } from '../lib/share-utils';
 import { parseMarkdownToTree } from '../lib/markdown-parser';
 
-const STORAGE_CASES_KEY = 'legal_mindmap_cases_v2';
-const STORAGE_ACTIVE_KEY = 'legal_mindmap_active_case_id_v2';
+const STORAGE_CASES_KEY = 'legal_mindmap_cases_v3';
+const STORAGE_ACTIVE_KEY = 'legal_mindmap_active_case_id_v3';
 
 interface MindMapState {
   // Multi-case portfolio state
@@ -125,8 +125,8 @@ function getInitialCases(): { cases: CaseItem[]; activeId: string; root: MindNod
     const newCase: CaseItem = {
       id: caseUid(),
       title: sharedCase.title || 'Импортированное дело из ссылки',
-      instance: 'first_instance',
-      courtName: 'Арбитражный суд',
+      instance: 'district',
+      courtName: 'Окружной суд (1-я инстанция)',
       status: 'in_progress',
       root: sharedCase,
       createdAt: Date.now(),
@@ -453,22 +453,18 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
     const found = get().cases.find((c) => c.id === caseId);
     if (!found) return;
 
-    let nextCourt = 'Апелляционный суд';
-    let instanceLabel = 'Апелляция';
-    let instanceBranchTitle = 'Основания апелляционного обжалования (ст. 270 АПК РФ)';
+    let nextCourt = 'Апелляционный суд (2-я инстанция)';
+    let instanceLabel = '2. Апелляционная инстанция';
+    let instanceBranchTitle = 'Основания апелляционной жалобы';
 
     if (nextInstance === 'appellate') {
-      nextCourt = 'Девятый арбитражный апелляционный суд (9-й ААС)';
-      instanceLabel = 'Апелляция';
-      instanceBranchTitle = 'Основания апелляционной жалобы (ст. 270 АПК РФ)';
-    } else if (nextInstance === 'cassation') {
-      nextCourt = 'Арбитражный суд Московского округа (АС МО)';
-      instanceLabel = 'Кассация (Округ)';
-      instanceBranchTitle = 'Основания кассационной жалобы (ст. 288 АПК РФ)';
+      nextCourt = 'Апелляционный суд (2-я инстанция)';
+      instanceLabel = '2. Апелляционная инстанция';
+      instanceBranchTitle = 'Основания апелляционной жалобы (2-я инстанция)';
     } else if (nextInstance === 'supreme') {
-      nextCourt = 'Верховный Суд Российской Федерации (СКЭС)';
-      instanceLabel = 'Верховный Суд РФ';
-      instanceBranchTitle = 'Основания передачи дела в СКЭС ВС РФ (ст. 291.11 АПК РФ)';
+      nextCourt = 'Верховный Суд (Высшая инстанция)';
+      instanceLabel = '3. Верховная инстанция';
+      instanceBranchTitle = 'Основания жалобы в Верховную инстанцию (последняя)';
     }
 
     const clonedRoot = cloneTree(found.root);
@@ -479,11 +475,11 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
       nodeType: 'thesis',
       color: '#f43f5e',
       priority: 'high',
-      notes: `Правовая аргументация для судебного заседания в инстанции: ${instanceLabel}`,
+      notes: `Правовая позиция для рассмотрения в: ${instanceLabel}`,
       children: [
         {
           id: uid(),
-          title: 'Нарушение норм процессуального / материального права',
+          title: 'Существенные нарушения, допущенные нижестоящим судом',
           nodeType: 'thesis',
           strengthScore: 5,
         },
@@ -517,7 +513,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
 
     get().addToast({
       type: 'success',
-      title: `Дело передано в инстанцию: ${instanceLabel}`,
+      title: `Дело передано в: ${instanceLabel}`,
       message: `Создано новое производство в суде «${nextCourt}».`,
     });
   },
@@ -734,7 +730,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
     get().addToast({
       type: 'info',
       title: 'Схема сброшена',
-      message: 'Загружена стандартная структура арбитражного спора.',
+      message: 'Загружена стандартная структура окружного дела.',
     });
   },
 

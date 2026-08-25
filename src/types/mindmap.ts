@@ -3,10 +3,9 @@ export type NodeId = string;
 export type PriorityLevel = 'low' | 'medium' | 'high';
 
 export type JudicialInstance =
-  | 'first_instance' // 1-я инстанция (Районный суд / АС субъекта РФ)
-  | 'appellate'      // Апелляционная инстанция (Апелляционный арбитражный суд / Апелляционный суд СОЮ)
-  | 'cassation'      // Окружная / Кассационная инстанция (Арбитражный суд округа / Кассационный суд СОЮ)
-  | 'supreme';       // Верховная инстанция (СКЭС ВС РФ / Президиум ВС РФ)
+  | 'district'   // 1) Окружная инстанция (первая)
+  | 'appellate'  // 2) Апелляционная инстанция (вторая)
+  | 'supreme';   // 3) Верховная инстанция (последняя)
 
 export type CaseStatus =
   | 'in_progress'    // В производстве
@@ -157,10 +156,10 @@ export interface CaseTemplate {
 export interface CaseItem {
   id: string;
   title: string;                 // Номер дела или стороны спора
-  instance: JudicialInstance;    // 1-я, Апелляция, Окружная/Кассация, ВС РФ
+  instance: JudicialInstance;    // district | appellate | supreme
   courtName: string;             // Наименование суда
   judge?: string;                // ФИО судьи / докладчика
-  caseNumber?: string;           // Официальный шифр дела (А40-..., 09АП-...)
+  caseNumber?: string;           // Официальный шифр дела
   status: CaseStatus;            // Статус процесса
   description?: string;          // Краткая фабула спора
   root: MindNode;                // Дерево правовой позиции

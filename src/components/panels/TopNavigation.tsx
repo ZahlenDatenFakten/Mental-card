@@ -13,7 +13,6 @@ import {
   Share2,
   ChevronDown,
   Filter,
-  Briefcase,
   Building2,
   Scale,
   Crown,
@@ -70,34 +69,31 @@ export const TopNavigation: React.FC = () => {
 
   const getInstanceBadge = (inst: JudicialInstance) => {
     switch (inst) {
-      case 'first_instance':
+      case 'district':
         return {
-          label: '1-я Инстанция',
+          label: '1. Окружная инстанция',
+          short: 'Окружной суд',
           icon: <Building2 className="w-3.5 h-3.5 text-sky-400" />,
           style: 'bg-sky-950/70 border-sky-800/80 text-sky-300',
         };
       case 'appellate':
         return {
-          label: 'Апелляция',
+          label: '2. Апелляционная инстанция',
+          short: 'Апелляционный суд',
           icon: <Scale className="w-3.5 h-3.5 text-violet-400" />,
           style: 'bg-violet-950/70 border-violet-800/80 text-violet-300',
         };
-      case 'cassation':
-        return {
-          label: 'Окружная / Кассация',
-          icon: <Briefcase className="w-3.5 h-3.5 text-amber-400" />,
-          style: 'bg-amber-950/70 border-amber-800/80 text-amber-300',
-        };
       case 'supreme':
         return {
-          label: 'Верховный Суд РФ',
+          label: '3. Верховная инстанция',
+          short: 'Верховный Суд',
           icon: <Crown className="w-3.5 h-3.5 text-emerald-400" />,
           style: 'bg-emerald-950/70 border-emerald-800/80 text-emerald-300',
         };
     }
   };
 
-  const currentBadge = getInstanceBadge(activeCase?.instance || 'first_instance');
+  const currentBadge = getInstanceBadge(activeCase?.instance || 'district');
 
   const handleAddWithType = (type: LegalNodeType, title: string) => {
     addChildNode(selectedId || root.id, title, type);
