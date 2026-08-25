@@ -83,20 +83,20 @@ export const TimelineModal: React.FC = () => {
   return (
     <div
       onClick={() => setTimelineOpen(false)}
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+      className="fixed inset-0 z-50 bg-black/65 backdrop-blur-xl flex items-center justify-center p-4 animate-apple-fade-in"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-4xl max-h-[85vh] bg-zinc-950 border border-zinc-800 rounded-2xl shadow-floating overflow-hidden animate-scale-in flex flex-col text-zinc-100"
+        className="w-full max-w-4xl max-h-[85vh] apple-glass-card rounded-3xl shadow-apple-modal border border-white/[0.12] overflow-hidden animate-apple-scale-in flex flex-col text-zinc-100"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-850 bg-zinc-900/60">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-amber-950/60 border border-amber-800/80 text-amber-400 rounded-lg">
+        <div className="flex items-center justify-between px-6 py-4.5 border-b border-white/[0.06] bg-white/[0.02]">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-amber-500/15 border border-amber-500/30 text-[#FF9F0A] rounded-2xl shadow-sm">
               <Calendar className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-zinc-100">
+              <h2 className="text-base font-semibold text-white tracking-tight">
                 Хронология событий и фабула дела
               </h2>
               <p className="text-xs text-zinc-400">
@@ -108,23 +108,23 @@ export const TimelineModal: React.FC = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopyMarkdown}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 rounded-lg transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white border border-white/[0.08] rounded-xl transition-all active:scale-[0.95] cursor-pointer"
             >
-              {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{isCopied ? 'Скопировано' : 'Копировать таблицу'}</span>
+              {isCopied ? <Check className="w-3.5 h-3.5 text-[#30D158]" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{isCopied ? 'Скопировано' : 'Копировать'}</span>
             </button>
 
             <button
               onClick={handleExportCsv}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 rounded-lg transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white border border-white/[0.08] rounded-xl transition-all active:scale-[0.95] cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Скачать CSV</span>
+              <span>CSV</span>
             </button>
 
             <button
               onClick={() => setTimelineOpen(false)}
-              className="p-1.5 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 rounded-lg transition-colors cursor-pointer"
+              className="p-1.5 text-zinc-400 hover:text-white hover:bg-white/[0.08] rounded-xl transition-all active:scale-[0.92] cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -134,13 +134,13 @@ export const TimelineModal: React.FC = () => {
         {/* Content Area */}
         <div className="p-6 overflow-y-auto space-y-4 flex-1">
           {events.length === 0 ? (
-            <div className="py-16 text-center text-zinc-500 text-sm">
-              <Calendar className="w-8 h-8 mx-auto mb-2 opacity-40 text-amber-400" />
+            <div className="py-16 text-center text-zinc-500 text-xs">
+              <Calendar className="w-8 h-8 mx-auto mb-2 opacity-40 text-[#FF9F0A]" />
               В деле пока нет событий с указанием дат.<br />
               Укажите дату в боковом инспекторе для любого блока, чтобы добавить его в хронологию.
             </div>
           ) : (
-            <div className="relative border-l-2 border-zinc-800 ml-4 pl-6 space-y-6 my-2">
+            <div className="relative border-l-2 border-white/[0.1] ml-4 pl-6 space-y-5 my-2">
               {events.map((ev) => (
                 <div
                   key={ev.nodeId}
@@ -148,35 +148,35 @@ export const TimelineModal: React.FC = () => {
                   onClick={() => handleJumpToNode(ev.nodeId)}
                 >
                   {/* Timeline Dot Marker */}
-                  <div className="absolute -left-[31px] top-1.5 w-3.5 h-3.5 rounded-full bg-zinc-900 border-2 border-amber-500 group-hover:scale-125 group-hover:bg-amber-400 transition-all shadow-md" />
+                  <div className="absolute -left-[31px] top-2 w-3.5 h-3.5 rounded-full bg-[#1c1c1e] border-2 border-[#FF9F0A] group-hover:scale-125 group-hover:bg-[#FF9F0A] transition-all shadow-md" />
 
                   {/* Event Card */}
-                  <div className="p-4 bg-zinc-900/80 group-hover:bg-zinc-850 border border-zinc-800 group-hover:border-zinc-700 rounded-xl transition-all shadow-sm flex items-start justify-between gap-4">
+                  <div className="p-4 bg-white/[0.04] group-hover:bg-white/[0.08] border border-white/[0.08] group-hover:border-white/[0.16] rounded-2xl transition-all duration-150 shadow-apple-card flex items-start justify-between gap-4">
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono font-bold text-amber-300 bg-amber-950/70 border border-amber-800/80 px-2 py-0.5 rounded">
+                        <span className="text-xs font-mono font-bold text-[#FFD60A] bg-[#FF9F0A]/15 border border-[#FF9F0A]/30 px-2 py-0.5 rounded-lg">
                           {ev.date} {ev.time && `(${ev.time})`}
                         </span>
                         {ev.casePages && (
-                          <span className="flex items-center gap-1 text-xs font-mono text-emerald-300 bg-emerald-950/60 border border-emerald-800/80 px-2 py-0.5 rounded">
+                          <span className="flex items-center gap-1 text-xs font-mono text-[#30D158] bg-[#30D158]/15 border border-[#30D158]/30 px-2 py-0.5 rounded-lg">
                             <FileCheck className="w-3 h-3" />
                             {ev.casePages}
                           </span>
                         )}
                       </div>
 
-                      <h3 className="text-sm font-semibold text-zinc-100 group-hover:text-amber-300 transition-colors">
+                      <h3 className="text-sm font-semibold text-white group-hover:text-[#FFD60A] transition-colors tracking-tight">
                         {ev.title}
                       </h3>
 
                       {ev.notes && (
-                        <p className="text-xs text-zinc-400 leading-relaxed font-sans">
+                        <p className="text-xs text-zinc-300 leading-relaxed font-sans">
                           {ev.notes}
                         </p>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-1 text-xs text-zinc-500 group-hover:text-emerald-400 transition-colors flex-shrink-0">
+                    <div className="flex items-center gap-1 text-xs text-zinc-400 group-hover:text-[#0A84FF] transition-colors flex-shrink-0">
                       <span>К блоку</span>
                       <CornerDownLeft className="w-3.5 h-3.5" />
                     </div>
@@ -188,9 +188,9 @@ export const TimelineModal: React.FC = () => {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 border-t border-zinc-850 bg-zinc-900/40 text-xs text-zinc-500 flex items-center justify-between">
+        <div className="px-6 py-3 border-t border-white/[0.06] bg-white/[0.02] text-xs text-zinc-400 flex items-center justify-between">
           <span>Всего событий в хронологии: {events.length}</span>
-          <span className="font-mono">Кликните на событие для перехода на холсте</span>
+          <span className="font-mono text-zinc-500">Кликните на событие для перехода на холсте</span>
         </div>
       </div>
     </div>

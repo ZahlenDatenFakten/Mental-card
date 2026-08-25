@@ -114,10 +114,8 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
 
   // Pointer event handlers for Apple-style 1:1 direct manipulation
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    // Ignore right click
     if (e.button !== 0) return;
 
-    // Don't drag if clicking buttons, inputs, links, or if editing
     const target = e.target as HTMLElement;
     if (
       target.closest('button, input, textarea, a, select') ||
@@ -175,7 +173,6 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
       e.stopPropagation();
       onNodeDragEnd?.(node.id, dx, dy, e.clientX, e.clientY);
     } else {
-      // Just a simple click selection
       onSelect(node.id);
     }
 
@@ -186,56 +183,56 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
   const hasChildren = node.children.length > 0 || node.collapsedCount > 0;
   const isRoot = node.isRoot;
 
-  // Visual type styling and icons
+  // Apple SF Pro Type Badges and Harmonious Tints
   const getNodeTypeBadge = (type?: LegalNodeType) => {
     switch (type) {
       case 'thesis':
         return {
-          icon: <Scale className="w-3.5 h-3.5 text-violet-400" />,
+          icon: <Scale className="w-3.5 h-3.5 text-[#BF5AF2]" />,
           label: 'Тезис',
-          bg: 'bg-violet-950/70 border-violet-800/80 text-violet-300',
+          bg: 'bg-[#BF5AF2]/15 border-[#BF5AF2]/30 text-[#E0B0FF]',
         };
       case 'norm':
         return {
-          icon: <BookOpen className="w-3.5 h-3.5 text-sky-400" />,
+          icon: <BookOpen className="w-3.5 h-3.5 text-[#0A84FF]" />,
           label: 'Норма',
-          bg: 'bg-sky-950/70 border-sky-800/80 text-sky-300',
+          bg: 'bg-[#0A84FF]/15 border-[#0A84FF]/30 text-[#64D2FF]',
         };
       case 'evidence':
         return {
-          icon: <FileCheck className="w-3.5 h-3.5 text-emerald-400" />,
+          icon: <FileCheck className="w-3.5 h-3.5 text-[#30D158]" />,
           label: 'Док-во',
-          bg: 'bg-emerald-950/70 border-emerald-800/80 text-emerald-300',
+          bg: 'bg-[#30D158]/15 border-[#30D158]/30 text-[#30D158]',
         };
       case 'fact_timeline':
         return {
-          icon: <Calendar className="w-3.5 h-3.5 text-amber-400" />,
+          icon: <Calendar className="w-3.5 h-3.5 text-[#FF9F0A]" />,
           label: 'Факт',
-          bg: 'bg-amber-950/70 border-amber-800/80 text-amber-300',
+          bg: 'bg-[#FF9F0A]/15 border-[#FF9F0A]/30 text-[#FFD60A]',
         };
       case 'counter_arg':
         return {
-          icon: <ShieldAlert className="w-3.5 h-3.5 text-orange-400" />,
+          icon: <ShieldAlert className="w-3.5 h-3.5 text-[#FF9F0A]" />,
           label: 'Оппонент',
-          bg: 'bg-orange-950/70 border-orange-800/80 text-orange-300',
+          bg: 'bg-[#FF9F0A]/15 border-[#FF9F0A]/30 text-[#FFB340]',
         };
       case 'rebuttal':
         return {
-          icon: <Zap className="w-3.5 h-3.5 text-yellow-400" />,
+          icon: <Zap className="w-3.5 h-3.5 text-[#FFD60A]" />,
           label: 'Опровержение',
-          bg: 'bg-yellow-950/70 border-yellow-800/80 text-yellow-300',
+          bg: 'bg-[#FFD60A]/15 border-[#FFD60A]/30 text-[#FFE57F]',
         };
       case 'risk':
         return {
-          icon: <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />,
+          icon: <AlertTriangle className="w-3.5 h-3.5 text-[#FF453A]" />,
           label: 'Риск',
-          bg: 'bg-rose-950/70 border-rose-800/80 text-rose-300',
+          bg: 'bg-[#FF453A]/15 border-[#FF453A]/30 text-[#FF6961]',
         };
       case 'remedy':
         return {
-          icon: <Gavel className="w-3.5 h-3.5 text-pink-400" />,
+          icon: <Gavel className="w-3.5 h-3.5 text-[#FF375F]" />,
           label: 'Иск / Просьба',
-          bg: 'bg-pink-950/70 border-pink-800/80 text-pink-300',
+          bg: 'bg-[#FF375F]/15 border-[#FF375F]/30 text-[#FF6B8B]',
         };
       default:
         return null;
@@ -264,40 +261,40 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
         e.stopPropagation();
         onStartEdit(node.id);
       }}
-      className={`group absolute select-none flex items-center transition-all duration-100 rounded-xl cursor-grab active:cursor-grabbing ${
+      className={`group absolute select-none flex items-center transition-all duration-100 rounded-2xl cursor-grab active:cursor-grabbing apple-glass-card ${
         isRoot
-          ? 'bg-zinc-900/95 border-2 shadow-lg z-20 border-zinc-700'
-          : 'bg-zinc-900/90 hover:bg-zinc-850 border shadow-md z-10'
+          ? 'border-white/[0.18] shadow-apple-card z-20 bg-[#1c1c1e]/95'
+          : 'z-10'
       } ${
         isDraggingThisNode
-          ? 'ring-2 ring-emerald-400 border-emerald-400 scale-[1.03] shadow-[0_20px_40px_rgba(0,0,0,0.7)] z-50 opacity-95 pointer-events-none'
+          ? 'ring-2 ring-[#0A84FF] border-[#0A84FF] scale-[1.025] shadow-[0_24px_48px_rgba(0,0,0,0.65)] z-50 opacity-95 pointer-events-none'
           : isHoverTarget
-          ? 'ring-2 ring-indigo-400 border-indigo-400 bg-indigo-950/80 scale-[1.03] shadow-lg z-40'
+          ? 'ring-2 ring-[#5E5CE6] border-[#5E5CE6] bg-[#5E5CE6]/20 scale-[1.02] shadow-apple-active z-40'
           : isSelected
-          ? 'ring-2 ring-emerald-500/90 border-emerald-500/80 shadow-[0_0_22px_rgba(16,185,129,0.3)] z-30'
-          : 'border-zinc-800/90 hover:border-zinc-700'
-      } ${isFilteredOut ? 'opacity-35 scale-[0.98]' : 'opacity-100'}`}
+          ? 'ring-[2px] ring-[#0A84FF] border-[#0A84FF]/80 shadow-[0_0_0_1px_#0A84FF,0_8px_32px_rgba(10,132,255,0.3)] z-30'
+          : 'hover:border-white/[0.18] hover:shadow-apple-hover'
+      } ${isFilteredOut ? 'opacity-30 scale-[0.98]' : 'opacity-100'}`}
       style={{
         transform: `translate3d(${currentX}px, ${currentY}px, 0)`,
         height: `${node.height}px`,
         touchAction: 'none',
       }}
     >
-      {/* Branch color vertical indicator */}
+      {/* Apple Accent Bar */}
       {node.color && (
         <div
-          className="w-1.5 self-stretch rounded-l-[10px] flex-shrink-0"
+          className="w-1.5 self-stretch rounded-l-[14px] flex-shrink-0"
           style={{ backgroundColor: node.color }}
         />
       )}
 
-      {/* Main node container */}
-      <div className="flex items-center gap-2 px-3 py-1 text-sm overflow-hidden whitespace-nowrap">
+      {/* Main Node Content */}
+      <div className="flex items-center gap-2 px-3.5 py-1 text-sm overflow-hidden whitespace-nowrap">
         {/* Subtle Grip Drag Handle on hover */}
         {!isRoot && (
           <div
             title="Свободно переместить блок или ветку"
-            className="text-zinc-600 group-hover:text-zinc-400 transition-colors -ml-1 cursor-grab"
+            className="text-white/20 group-hover:text-white/50 transition-colors -ml-1 cursor-grab"
           >
             <GripHorizontal className="w-3 h-3" />
           </div>
@@ -307,7 +304,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
         {typeBadge && (
           <div
             title={`Тип: ${typeBadge.label}`}
-            className="flex items-center justify-center p-1 rounded-lg bg-zinc-850 border border-zinc-750 flex-shrink-0"
+            className={`flex items-center justify-center p-1 rounded-lg border ${typeBadge.bg} flex-shrink-0`}
           >
             {typeBadge.icon}
           </div>
@@ -322,14 +319,14 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
             onChange={(e) => setEditText(e.target.value)}
             onBlur={handleFinishEdit}
             onKeyDown={handleKeyDown}
-            className="bg-zinc-950/90 text-zinc-100 px-1.5 py-0.5 rounded-lg outline-none border border-emerald-500/80 font-medium text-sm min-w-[100px]"
+            className="bg-black/60 text-white px-2 py-0.5 rounded-lg outline-none border border-[#0A84FF] font-medium text-sm min-w-[100px] shadow-inner"
             style={{ width: `${Math.max(100, editText.length * 9)}px` }}
           />
         ) : (
           <span
-            className={`tracking-tight ${
+            className={`tracking-tight font-sans ${
               isRoot
-                ? 'text-zinc-50 font-semibold text-[15px]'
+                ? 'text-white font-semibold text-[14.5px]'
                 : node.depth === 1
                 ? 'text-zinc-100 font-medium text-[13.5px]'
                 : 'text-zinc-200 text-[13px]'
@@ -343,7 +340,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
         {node.eventDate && (
           <span
             title={`Дата события: ${node.eventDate}`}
-            className="inline-flex items-center gap-1 text-[11px] font-mono font-medium text-amber-300 bg-amber-950/60 border border-amber-800/80 px-1.5 py-0.2 rounded"
+            className="inline-flex items-center gap-1 text-[11px] font-mono font-medium text-amber-300 bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.2 rounded-md"
           >
             <Calendar className="w-2.5 h-2.5" />
             {node.eventDate}
@@ -354,7 +351,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
         {node.lawArticle && (
           <span
             title={`Статья закона: ${node.lawArticle}`}
-            className="inline-flex items-center gap-1 text-[11px] font-mono text-sky-300 bg-sky-950/60 border border-sky-800/80 px-1.5 py-0.2 rounded max-w-[140px] truncate"
+            className="inline-flex items-center gap-1 text-[11px] font-mono text-sky-300 bg-sky-500/15 border border-sky-500/30 px-1.5 py-0.2 rounded-md max-w-[140px] truncate"
           >
             <BookOpen className="w-2.5 h-2.5 flex-shrink-0" />
             <span className="truncate">{node.lawArticle}</span>
@@ -365,7 +362,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
         {(node.casePages || node.caseVolume) && (
           <span
             title={`Материалы дела: ${[node.caseVolume, node.casePages].filter(Boolean).join(', ')}`}
-            className="inline-flex items-center gap-1 text-[11px] font-mono text-emerald-300 bg-emerald-950/60 border border-emerald-800/80 px-1.5 py-0.2 rounded"
+            className="inline-flex items-center gap-1 text-[11px] font-mono text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.2 rounded-md"
           >
             <FileCheck className="w-2.5 h-2.5" />
             {[node.caseVolume, node.casePages].filter(Boolean).join(', ')}
@@ -376,7 +373,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
         {node.strengthScore && (
           <span
             title={`Весомость доказательства: ${node.strengthScore} из 5`}
-            className="inline-flex items-center gap-0.5 text-[10px] font-mono text-amber-400 bg-zinc-800/80 border border-zinc-700 px-1 py-0.2 rounded"
+            className="inline-flex items-center gap-0.5 text-[10px] font-mono text-amber-400 bg-white/[0.06] border border-white/[0.1] px-1 py-0.2 rounded-md"
           >
             <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
             {node.strengthScore}
@@ -389,7 +386,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
             {node.tags.slice(0, 2).map((tag, idx) => (
               <span
                 key={idx}
-                className="text-[10px] font-mono text-zinc-400 bg-zinc-800/80 px-1.5 py-0.2 rounded border border-zinc-700/60"
+                className="text-[10px] font-mono text-zinc-400 bg-white/[0.05] px-1.5 py-0.2 rounded-md border border-white/[0.08]"
               >
                 #{tag}
               </span>
@@ -406,7 +403,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
               setSidebarOpen(true);
             }}
             title={node.notes}
-            className="text-zinc-400 hover:text-emerald-400 transition-colors p-0.5 rounded hover:bg-zinc-800"
+            className="text-zinc-400 hover:text-emerald-400 transition-colors p-0.5 rounded-lg hover:bg-white/[0.08]"
           >
             <FileText className="w-3.5 h-3.5" />
           </button>
@@ -420,7 +417,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
             title={node.url}
-            className="text-zinc-400 hover:text-sky-400 transition-colors p-0.5 rounded hover:bg-zinc-800"
+            className="text-zinc-400 hover:text-sky-400 transition-colors p-0.5 rounded-lg hover:bg-white/[0.08]"
           >
             <ExternalLink className="w-3.5 h-3.5" />
           </a>
@@ -435,10 +432,10 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
             onToggleCollapse(node.id);
           }}
           title={node.isCollapsed ? `Развернуть (${node.collapsedCount} узлов)` : 'Свернуть ветку'}
-          className={`flex items-center justify-center h-5 px-1.5 mr-1.5 rounded-md text-[11px] font-mono transition-colors ${
+          className={`flex items-center justify-center h-5 px-1.5 mr-1.5 rounded-lg text-[11px] font-mono transition-all ${
             node.isCollapsed
-              ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-700/80 hover:bg-emerald-900'
-              : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
+              ? 'bg-[#30D158]/20 text-[#30D158] border border-[#30D158]/40 hover:bg-[#30D158]/30'
+              : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.08]'
           }`}
         >
           {node.isCollapsed ? (
@@ -452,9 +449,9 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
         </button>
       )}
 
-      {/* Quick Action Floating Controls */}
+      {/* Quick Action Floating Controls (Apple Glass Capsule) */}
       <div
-        className={`absolute left-full ml-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto ${
+        className={`absolute left-full ml-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-150 pointer-events-none group-hover:pointer-events-auto p-1 apple-glass rounded-xl shadow-apple-card ${
           isSelected && !isDraggingThisNode ? 'opacity-100 pointer-events-auto' : ''
         }`}
       >
@@ -465,7 +462,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
             onAddChild(node.id);
           }}
           title="Добавить дочерний элемент (Tab)"
-          className="flex items-center justify-center w-6 h-6 bg-zinc-800/90 hover:bg-emerald-600 text-zinc-300 hover:text-white rounded-lg border border-zinc-700 shadow-md transition-all active:scale-[0.95] cursor-pointer"
+          className="flex items-center justify-center w-6 h-6 bg-white/[0.08] hover:bg-[#30D158] text-zinc-200 hover:text-black rounded-lg border border-white/[0.1] shadow-sm transition-all active:scale-[0.92] cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" />
         </button>
@@ -477,7 +474,7 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
             onStartEdit(node.id);
           }}
           title="Редактировать текст (F2)"
-          className="flex items-center justify-center w-6 h-6 bg-zinc-800/90 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg border border-zinc-700 shadow-md transition-all active:scale-[0.95] cursor-pointer"
+          className="flex items-center justify-center w-6 h-6 bg-white/[0.08] hover:bg-white/[0.15] text-zinc-200 hover:text-white rounded-lg border border-white/[0.1] shadow-sm transition-all active:scale-[0.92] cursor-pointer"
         >
           <Edit3 className="w-3.5 h-3.5" />
         </button>
@@ -490,18 +487,18 @@ export const NodeComponent: React.FC<NodeComponentProps> = ({
               duplicateNode(node.id);
             }}
             title="Дублировать ветку"
-            className="flex items-center justify-center w-6 h-6 bg-zinc-800/90 hover:bg-violet-600 text-zinc-300 hover:text-white rounded-lg border border-zinc-700 shadow-md transition-all active:scale-[0.95] cursor-pointer"
+            className="flex items-center justify-center w-6 h-6 bg-white/[0.08] hover:bg-[#BF5AF2] text-zinc-200 hover:text-white rounded-lg border border-white/[0.1] shadow-sm transition-all active:scale-[0.92] cursor-pointer"
           >
             <Copy className="w-3.5 h-3.5" />
           </button>
         )}
 
-        {/* Delete Node (Non-root) with custom In-App Confirm Dialog */}
+        {/* Delete Node (Non-root) */}
         {!isRoot && (
           <button
             onClick={handleDeleteWithConfirm}
             title="Удалить узел со всем поддеревом (Del)"
-            className="flex items-center justify-center w-6 h-6 bg-zinc-800/90 hover:bg-rose-600 text-zinc-400 hover:text-white rounded-lg border border-zinc-700 shadow-md transition-all active:scale-[0.95] cursor-pointer"
+            className="flex items-center justify-center w-6 h-6 bg-white/[0.08] hover:bg-[#FF453A] text-zinc-400 hover:text-white rounded-lg border border-white/[0.1] shadow-sm transition-all active:scale-[0.92] cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>

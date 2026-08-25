@@ -5,8 +5,8 @@ import {
   Copy,
   Check,
   Globe,
-  Lock,
-  Sparkles,
+  Link,
+  ShieldCheck,
 } from 'lucide-react';
 import { useMindMapStore } from '../../store/useMindMapStore';
 import { generateShareUrl } from '../../lib/share-utils';
@@ -16,107 +16,110 @@ export const ShareModal: React.FC = () => {
     root,
     isShareOpen,
     setShareOpen,
+    activeCaseId,
+    cases,
   } = useMindMapStore();
 
   const [copied, setCopied] = useState(false);
 
   if (!isShareOpen) return null;
 
+  const activeCase = cases.find((c) => c.id === activeCaseId) || cases[0];
   const shareUrl = generateShareUrl(root);
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      // ignore
+    }
   };
 
   return (
     <div
       onClick={() => setShareOpen(false)}
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+      className="fixed inset-0 z-50 bg-black/65 backdrop-blur-xl flex items-center justify-center p-4 animate-apple-fade-in"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-xl bg-zinc-950 border border-zinc-800 rounded-2xl shadow-floating overflow-hidden animate-scale-in flex flex-col text-zinc-100"
+        className="w-full max-w-lg apple-glass-card rounded-3xl shadow-apple-modal border border-white/[0.12] overflow-hidden animate-apple-scale-in flex flex-col text-zinc-100"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-850 bg-zinc-900/60">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-emerald-950/60 border border-emerald-800/80 text-emerald-400 rounded-lg">
+        <div className="flex items-center justify-between px-6 py-4.5 border-b border-white/[0.06] bg-white/[0.02]">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-emerald-500/15 border border-emerald-500/30 text-[#30D158] rounded-2xl shadow-sm">
               <Share2 className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-zinc-100">
-                Поделиться юридической картой
+              <h2 className="text-base font-semibold text-white tracking-tight">
+                Поделиться ментальной картой дела
               </h2>
               <p className="text-xs text-zinc-400">
-                Отправьте ссылку коллеге, доверителю или партнеру в один клик
+                Создайте автономную ссылку для передачи коллегам или клиенту
               </p>
             </div>
           </div>
 
           <button
             onClick={() => setShareOpen(false)}
-            className="p-1.5 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 rounded-lg transition-colors cursor-pointer"
+            className="p-1.5 text-zinc-400 hover:text-white hover:bg-white/[0.08] rounded-xl transition-all active:scale-[0.92] cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Modal Body */}
-        <div className="p-6 space-y-5">
-          {/* Share Link Input */}
+        {/* Content */}
+        <div className="p-6 space-y-4">
+          <div className="p-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl space-y-2">
+            <div className="flex items-center gap-2 text-xs font-semibold text-white">
+              <Globe className="w-4 h-4 text-[#0A84FF]" />
+              <span>Автономная ссылка с данными дела</span>
+            </div>
+            <p className="text-xs text-zinc-300 leading-relaxed font-sans">
+              Вся структура дела, тезисы, доказательства и хронология упакованы прямо в ссылку (LZ-String компрессия). Получатель сразу откроет готовую интерактивную карту в браузере без регистрации.
+            </p>
+          </div>
+
+          {/* Link Box */}
           <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
-              Уникальная ссылка на дело (все данные зашифрованы в ссылке)
+            <label className="block text-xs font-medium text-zinc-300 mb-1.5 flex items-center gap-1.5">
+              <Link className="w-3.5 h-3.5" />
+              <span>Прямая ссылка на дело «{activeCase?.title}»</span>
             </label>
             <div className="flex items-center gap-2">
               <input
                 type="text"
                 readOnly
                 value={shareUrl}
-                className="flex-1 p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-mono text-zinc-300 outline-none select-all truncate"
+                className="flex-1 bg-black/40 border border-white/[0.08] text-white px-3.5 py-2.5 rounded-xl text-xs font-mono select-all outline-none"
               />
               <button
-                onClick={handleCopy}
-                className="flex items-center gap-1.5 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold rounded-xl text-xs transition-colors cursor-pointer shadow-md flex-shrink-0"
+                onClick={handleCopyLink}
+                className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold apple-emerald-btn rounded-xl transition-all active:scale-[0.95] cursor-pointer"
               >
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                <span>{copied ? 'Скопировано!' : 'Копировать'}</span>
+                {copied ? <Check className="w-4 h-4 text-black" /> : <Copy className="w-4 h-4" />}
+                <span>{copied ? 'Скопировано!' : 'Скопировать'}</span>
               </button>
             </div>
           </div>
 
-          {/* Privacy & Technology Explanation */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-            <div className="p-3.5 bg-zinc-900/60 border border-zinc-850 rounded-xl space-y-1.5">
-              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
-                <Globe className="w-4 h-4" />
-                <span>Работает без регистрации</span>
-              </div>
-              <p className="text-[11px] text-zinc-400 leading-relaxed">
-                Получатель ссылки сразу увидит полное интерактивное дерево, хронологию и реестр доказательств в браузере.
-              </p>
-            </div>
-
-            <div className="p-3.5 bg-zinc-900/60 border border-zinc-850 rounded-xl space-y-1.5">
-              <div className="flex items-center gap-2 text-xs font-semibold text-sky-400">
-                <Lock className="w-4 h-4" />
-                <span>Безопасность данных</span>
-              </div>
-              <p className="text-[11px] text-zinc-400 leading-relaxed">
-                Структура дела упакована сжатием LZ-String. Данные не передаются на сторонние серверы и хранятся на вашем устройстве.
-              </p>
-            </div>
+          <div className="flex items-center gap-2 text-xs text-zinc-400 pt-2">
+            <ShieldCheck className="w-4 h-4 text-[#30D158]" />
+            <span>Конфиденциально: данные передаются напрямую через URL хэш</span>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 border-t border-zinc-850 bg-zinc-900/40 text-xs text-zinc-500 flex items-center justify-between">
-          <span className="flex items-center gap-1">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-            Ссылка готова для отправки в Telegram, почту или мессенджер
-          </span>
+        <div className="px-6 py-3 border-t border-white/[0.06] bg-white/[0.02] text-xs text-zinc-400 flex items-center justify-between">
+          <span>Размер ссылки: ~{Math.round(shareUrl.length / 1024 * 10) / 10} КБ</span>
+          <button
+            onClick={() => setShareOpen(false)}
+            className="text-xs text-zinc-400 hover:text-white transition-colors cursor-pointer"
+          >
+            Закрыть
+          </button>
         </div>
       </div>
     </div>

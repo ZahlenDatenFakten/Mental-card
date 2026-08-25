@@ -101,31 +101,31 @@ export const ExportImportModal: React.FC = () => {
   return (
     <div
       onClick={() => setExportImportOpen(false)}
-      className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+      className="fixed inset-0 z-50 bg-black/65 backdrop-blur-xl flex items-center justify-center p-4 animate-apple-fade-in"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-2xl shadow-floating overflow-hidden animate-scale-in flex flex-col"
+        className="w-full max-w-2xl apple-glass-card rounded-3xl shadow-apple-modal border border-white/[0.12] overflow-hidden animate-apple-scale-in flex flex-col text-zinc-100"
       >
-        {/* Header with Tabs */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-zinc-850 bg-zinc-900/40">
-          <div className="flex items-center gap-4">
+        {/* Header with Segmented Tabs */}
+        <div className="flex items-center justify-between px-6 pt-5 pb-3.5 border-b border-white/[0.06] bg-white/[0.02]">
+          <div className="flex items-center gap-1.5 p-1 bg-white/[0.04] border border-white/[0.08] rounded-xl">
             <button
               onClick={() => setActiveTab('export')}
-              className={`text-sm font-semibold pb-1 border-b-2 transition-colors ${
+              className={`text-xs font-semibold px-3 py-1 rounded-lg transition-all active:scale-[0.96] cursor-pointer ${
                 activeTab === 'export'
-                  ? 'text-emerald-400 border-emerald-500'
-                  : 'text-zinc-400 border-transparent hover:text-zinc-200'
+                  ? 'bg-white/[0.15] text-white shadow-sm'
+                  : 'text-zinc-400 hover:text-white'
               }`}
             >
               Экспорт схемы
             </button>
             <button
               onClick={() => setActiveTab('import')}
-              className={`text-sm font-semibold pb-1 border-b-2 transition-colors ${
+              className={`text-xs font-semibold px-3 py-1 rounded-lg transition-all active:scale-[0.96] cursor-pointer ${
                 activeTab === 'import'
-                  ? 'text-emerald-400 border-emerald-500'
-                  : 'text-zinc-400 border-transparent hover:text-zinc-200'
+                  ? 'bg-white/[0.15] text-white shadow-sm'
+                  : 'text-zinc-400 hover:text-white'
               }`}
             >
               Импорт данных
@@ -134,7 +134,7 @@ export const ExportImportModal: React.FC = () => {
 
           <button
             onClick={() => setExportImportOpen(false)}
-            className="p-1 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 rounded-lg transition-colors"
+            className="p-1.5 text-zinc-400 hover:text-white hover:bg-white/[0.08] rounded-xl transition-all active:scale-[0.92] cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -149,12 +149,12 @@ export const ExportImportModal: React.FC = () => {
                 {/* PNG */}
                 <button
                   onClick={handleExportPng}
-                  className="flex flex-col items-start p-4 bg-zinc-900/80 hover:bg-zinc-850 border border-zinc-800 hover:border-zinc-700 rounded-xl transition-all group text-left"
+                  className="flex flex-col items-start p-4.5 bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] hover:border-white/[0.15] rounded-2xl transition-all duration-150 group text-left shadow-apple-card active:scale-[0.97]"
                 >
-                  <div className="p-2 bg-zinc-800 rounded-lg text-emerald-400 mb-3 group-hover:scale-105 transition-transform">
+                  <div className="p-2.5 bg-emerald-500/15 text-[#30D158] border border-emerald-500/30 rounded-xl mb-3 group-hover:scale-105 transition-transform">
                     <FileImage className="w-5 h-5" />
                   </div>
-                  <span className="text-sm font-semibold text-zinc-100 mb-1">
+                  <span className="text-sm font-semibold text-white mb-1 tracking-tight">
                     PNG (Hi-DPI)
                   </span>
                   <span className="text-xs text-zinc-400">
@@ -165,12 +165,12 @@ export const ExportImportModal: React.FC = () => {
                 {/* SVG */}
                 <button
                   onClick={handleExportSvg}
-                  className="flex flex-col items-start p-4 bg-zinc-900/80 hover:bg-zinc-850 border border-zinc-800 hover:border-zinc-700 rounded-xl transition-all group text-left"
+                  className="flex flex-col items-start p-4.5 bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] hover:border-white/[0.15] rounded-2xl transition-all duration-150 group text-left shadow-apple-card active:scale-[0.97]"
                 >
-                  <div className="p-2 bg-zinc-800 rounded-lg text-sky-400 mb-3 group-hover:scale-105 transition-transform">
+                  <div className="p-2.5 bg-sky-500/15 text-sky-400 border border-sky-500/30 rounded-xl mb-3 group-hover:scale-105 transition-transform">
                     <FileCode className="w-5 h-5" />
                   </div>
-                  <span className="text-sm font-semibold text-zinc-100 mb-1">
+                  <span className="text-sm font-semibold text-white mb-1 tracking-tight">
                     Векторный SVG
                   </span>
                   <span className="text-xs text-zinc-400">
@@ -181,12 +181,12 @@ export const ExportImportModal: React.FC = () => {
                 {/* JSON */}
                 <button
                   onClick={handleExportJson}
-                  className="flex flex-col items-start p-4 bg-zinc-900/80 hover:bg-zinc-850 border border-zinc-800 hover:border-zinc-700 rounded-xl transition-all group text-left"
+                  className="flex flex-col items-start p-4.5 bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] hover:border-white/[0.15] rounded-2xl transition-all duration-150 group text-left shadow-apple-card active:scale-[0.97]"
                 >
-                  <div className="p-2 bg-zinc-800 rounded-lg text-violet-400 mb-3 group-hover:scale-105 transition-transform">
+                  <div className="p-2.5 bg-purple-500/15 text-[#BF5AF2] border border-purple-500/30 rounded-xl mb-3 group-hover:scale-105 transition-transform">
                     <FileJson className="w-5 h-5" />
                   </div>
-                  <span className="text-sm font-semibold text-zinc-100 mb-1">
+                  <span className="text-sm font-semibold text-white mb-1 tracking-tight">
                     JSON Бекап
                   </span>
                   <span className="text-xs text-zinc-400">
@@ -203,11 +203,11 @@ export const ExportImportModal: React.FC = () => {
                   </label>
                   <button
                     onClick={handleCopyMarkdown}
-                    className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 rounded-lg transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white border border-white/[0.08] rounded-xl transition-all active:scale-[0.95]"
                   >
                     {copiedMd ? (
                       <>
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <Check className="w-3.5 h-3.5 text-[#30D158]" />
                         <span>Скопировано</span>
                       </>
                     ) : (
@@ -218,7 +218,7 @@ export const ExportImportModal: React.FC = () => {
                     )}
                   </button>
                 </div>
-                <pre className="w-full h-32 p-3 bg-zinc-900/90 border border-zinc-800 rounded-xl text-xs font-mono text-zinc-300 overflow-y-auto select-all leading-relaxed">
+                <pre className="w-full h-32 p-3.5 bg-black/40 border border-white/[0.08] rounded-2xl text-xs font-mono text-zinc-200 overflow-y-auto select-all leading-relaxed">
                   {currentMarkdown}
                 </pre>
               </div>
@@ -235,12 +235,12 @@ export const ExportImportModal: React.FC = () => {
                   onChange={(e) => setMarkdownInput(e.target.value)}
                   placeholder={`# Главная цель\n  - Подзадача 1\n    - Деталь 1.1\n    - Деталь 1.2 [Ссылка](https://example.com) #frontend !high\n  - Подзадача 2\n    - Деталь 2.1`}
                   rows={6}
-                  className="w-full p-3 bg-zinc-900/90 border border-zinc-800 focus:border-emerald-500 rounded-xl text-xs font-mono text-zinc-200 outline-none resize-none leading-relaxed transition-colors"
+                  className="w-full p-3.5 bg-black/40 border border-white/[0.08] focus:border-[#0A84FF] rounded-2xl text-xs font-mono text-white outline-none resize-none leading-relaxed transition-colors"
                 />
               </div>
 
               {importError && (
-                <div className="text-xs text-rose-400 bg-rose-950/40 border border-rose-900/60 p-2.5 rounded-lg">
+                <div className="text-xs text-[#FF453A] bg-[#FF453A]/15 border border-[#FF453A]/30 p-3 rounded-xl">
                   {importError}
                 </div>
               )}
@@ -249,7 +249,7 @@ export const ExportImportModal: React.FC = () => {
               <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
                 <div className="flex items-center gap-2">
                   {/* File Upload JSON */}
-                  <label className="cursor-pointer flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 rounded-xl transition-colors">
+                  <label className="cursor-pointer flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-zinc-300 hover:text-white bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] rounded-xl transition-all active:scale-[0.95]">
                     <Upload className="w-4 h-4" />
                     <span>Загрузить JSON</span>
                     <input
@@ -266,7 +266,7 @@ export const ExportImportModal: React.FC = () => {
                       resetToDefault();
                       setExportImportOpen(false);
                     }}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900/50 hover:bg-zinc-900 border border-zinc-800 rounded-xl transition-colors"
+                    className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-zinc-400 hover:text-white bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] rounded-xl transition-all active:scale-[0.95]"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                     <span>Демо-шаблон</span>
@@ -275,7 +275,7 @@ export const ExportImportModal: React.FC = () => {
 
                 <button
                   onClick={handleImportMarkdownSubmit}
-                  className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-zinc-950 bg-emerald-400 hover:bg-emerald-300 rounded-xl shadow-md transition-colors"
+                  className="flex items-center gap-2 px-4.5 py-2 text-xs font-semibold apple-emerald-btn rounded-xl transition-all active:scale-[0.95]"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>Построить карту</span>

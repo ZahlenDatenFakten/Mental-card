@@ -224,11 +224,9 @@ export const MindMapCanvas: React.FC = () => {
   const handleNodeDragEnd = useCallback(
     (nodeId: string, dx: number, dy: number) => {
       if (dragState) {
-        // If dropped onto another node -> reparent branch to target node
         if (dragState.hoverTargetId && dragState.hoverTargetId !== nodeId) {
           moveNode(nodeId, dragState.hoverTargetId);
         } else if (Math.hypot(dx, dy) > 4) {
-          // If released in free space -> permanently save new branch position
           moveBranchPosition(nodeId, dx, dy);
         }
       }
@@ -294,13 +292,13 @@ export const MindMapCanvas: React.FC = () => {
         })}
       </div>
 
-      {/* Floating Bottom-Left Canvas Controls Bar */}
-      <div className="fixed bottom-5 left-5 z-40 flex items-center gap-1 p-1 bg-zinc-900/90 border border-zinc-800/90 rounded-xl shadow-floating backdrop-blur-md">
+      {/* Apple Floating Glass Capsule HUD (Bottom-Left) */}
+      <div className="fixed bottom-5 left-5 z-40 flex items-center gap-1 p-1.5 apple-glass rounded-full shadow-apple-hud border border-white/[0.12]">
         {/* Zoom In */}
         <button
           onClick={zoomIn}
           title="Приблизить (Колесо мыши вверх)"
-          className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-850 rounded-lg transition-all active:scale-[0.95] cursor-pointer"
+          className="p-2 text-zinc-300 hover:text-white hover:bg-white/[0.1] rounded-full transition-all active:scale-[0.9] cursor-pointer"
         >
           <ZoomIn className="w-4 h-4" />
         </button>
@@ -309,7 +307,7 @@ export const MindMapCanvas: React.FC = () => {
         <button
           onClick={resetZoom}
           title="Сбросить масштаб (100%)"
-          className="px-2 py-1 text-xs font-mono font-medium text-zinc-300 hover:text-white hover:bg-zinc-850 rounded-lg transition-all active:scale-[0.95] min-w-[52px] text-center cursor-pointer"
+          className="px-2.5 py-1 text-xs font-mono font-medium text-zinc-300 hover:text-white hover:bg-white/[0.1] rounded-full transition-all active:scale-[0.92] min-w-[54px] text-center cursor-pointer"
         >
           {Math.round(transform.scale * 100)}%
         </button>
@@ -318,18 +316,18 @@ export const MindMapCanvas: React.FC = () => {
         <button
           onClick={zoomOut}
           title="Отдалить (Колесо мыши вниз)"
-          className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-850 rounded-lg transition-all active:scale-[0.95] cursor-pointer"
+          className="p-2 text-zinc-300 hover:text-white hover:bg-white/[0.1] rounded-full transition-all active:scale-[0.9] cursor-pointer"
         >
           <ZoomOut className="w-4 h-4" />
         </button>
 
-        <div className="w-[1px] h-5 bg-zinc-800 mx-0.5" />
+        <div className="w-[1px] h-5 bg-white/[0.15] mx-0.5" />
 
         {/* Fit to View */}
         <button
           onClick={handleFitToScreen}
           title="Вписать всю карту в экран"
-          className="p-2 text-zinc-400 hover:text-emerald-400 hover:bg-zinc-850 rounded-lg transition-all active:scale-[0.95] cursor-pointer"
+          className="p-2 text-zinc-300 hover:text-[#0A84FF] hover:bg-white/[0.1] rounded-full transition-all active:scale-[0.9] cursor-pointer"
         >
           <Maximize2 className="w-4 h-4" />
         </button>
@@ -338,19 +336,19 @@ export const MindMapCanvas: React.FC = () => {
         <button
           onClick={resetTreeAutoLayout}
           title="Автоматически выровнять все блоки и ветки в аккуратное дерево"
-          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-emerald-400 hover:text-emerald-300 bg-emerald-950/40 hover:bg-emerald-950/80 border border-emerald-800/60 rounded-lg transition-all active:scale-[0.95] cursor-pointer"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#0A84FF]/25 hover:bg-[#0A84FF]/40 border border-[#0A84FF]/50 rounded-full transition-all active:scale-[0.92] cursor-pointer shadow-sm"
         >
-          <Sparkles className="w-3.5 h-3.5" />
+          <Sparkles className="w-3.5 h-3.5 text-[#0A84FF]" />
           <span className="hidden sm:inline">Выровнять</span>
         </button>
 
-        <div className="w-[1px] h-5 bg-zinc-800 mx-0.5" />
+        <div className="w-[1px] h-5 bg-white/[0.15] mx-0.5" />
 
         {/* Collapse All */}
         <button
           onClick={collapseAll}
           title="Свернуть все ветки"
-          className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-850 rounded-lg transition-all active:scale-[0.95] cursor-pointer"
+          className="p-2 text-zinc-300 hover:text-white hover:bg-white/[0.1] rounded-full transition-all active:scale-[0.9] cursor-pointer"
         >
           <FoldHorizontal className="w-4 h-4" />
         </button>
@@ -359,7 +357,7 @@ export const MindMapCanvas: React.FC = () => {
         <button
           onClick={expandAll}
           title="Развернуть все ветки"
-          className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-850 rounded-lg transition-all active:scale-[0.95] cursor-pointer"
+          className="p-2 text-zinc-300 hover:text-white hover:bg-white/[0.1] rounded-full transition-all active:scale-[0.9] cursor-pointer"
         >
           <UnfoldHorizontal className="w-4 h-4" />
         </button>

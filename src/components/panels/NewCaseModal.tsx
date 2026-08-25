@@ -52,7 +52,6 @@ export const NewCaseModal: React.FC = () => {
     });
 
     setNewCaseOpen(false);
-    // Reset form
     setTitle('');
     setInstance('district');
     setCourtName('Окружной суд (1-я инстанция)');
@@ -64,20 +63,20 @@ export const NewCaseModal: React.FC = () => {
   return (
     <div
       onClick={() => setNewCaseOpen(false)}
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+      className="fixed inset-0 z-50 bg-black/65 backdrop-blur-xl flex items-center justify-center p-4 animate-apple-fade-in"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-2xl shadow-floating overflow-hidden animate-scale-in flex flex-col text-zinc-100 max-h-[90vh]"
+        className="w-full max-w-2xl apple-glass-card rounded-3xl shadow-apple-modal border border-white/[0.12] overflow-hidden animate-apple-scale-in flex flex-col text-zinc-100 max-h-[90vh]"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-850 bg-zinc-900/60">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-emerald-950/60 border border-emerald-800/80 text-emerald-400 rounded-lg">
+        <div className="flex items-center justify-between px-6 py-4.5 border-b border-white/[0.06] bg-white/[0.02]">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-emerald-500/15 border border-emerald-500/30 text-[#30D158] rounded-2xl shadow-sm">
               <Layers className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-zinc-100">
+              <h2 className="text-base font-semibold text-white tracking-tight">
                 Новое судебное производство
               </h2>
               <p className="text-xs text-zinc-400">
@@ -88,7 +87,7 @@ export const NewCaseModal: React.FC = () => {
 
           <button
             onClick={() => setNewCaseOpen(false)}
-            className="p-1.5 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 rounded-lg transition-colors cursor-pointer"
+            className="p-1.5 text-zinc-400 hover:text-white hover:bg-white/[0.08] rounded-xl transition-all active:scale-[0.92] cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -98,26 +97,26 @@ export const NewCaseModal: React.FC = () => {
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4">
           {/* Instance Selector — 3 Hierarchy Levels */}
           <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-2">
+            <label className="block text-xs font-semibold text-zinc-300 mb-2 uppercase tracking-wider">
               Судебная инстанция
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2.5">
               {/* 1. Окружная */}
               <button
                 type="button"
                 onClick={() => handleInstanceChange('district')}
-                className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
+                className={`p-3.5 rounded-2xl border text-left flex flex-col justify-between transition-all active:scale-[0.96] cursor-pointer ${
                   instance === 'district'
-                    ? 'bg-sky-950/60 border-sky-600 text-sky-200 ring-1 ring-sky-500/40 shadow-sm'
-                    : 'bg-zinc-900/70 border-zinc-800 text-zinc-400 hover:bg-zinc-850 hover:text-zinc-200'
+                    ? 'bg-sky-500/20 border-[#0A84FF] text-white ring-1 ring-[#0A84FF]/40 shadow-sm'
+                    : 'bg-white/[0.03] border-white/[0.06] text-zinc-400 hover:bg-white/[0.07] hover:text-zinc-200'
                 }`}
               >
                 <div className="flex items-center justify-between w-full mb-1">
                   <Building2 className="w-4 h-4 text-sky-400" />
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-sky-950 border border-sky-800 text-sky-300">1-я</span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-sky-500/20 border border-sky-500/40 text-sky-300">1-я</span>
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-zinc-100">Окружная инстанция</div>
+                  <div className="text-xs font-semibold text-white">Окружная инстанция</div>
                   <div className="text-[10px] text-zinc-400 mt-0.5 leading-tight">Первая инстанция</div>
                 </div>
               </button>
@@ -126,18 +125,18 @@ export const NewCaseModal: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleInstanceChange('appellate')}
-                className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
+                className={`p-3.5 rounded-2xl border text-left flex flex-col justify-between transition-all active:scale-[0.96] cursor-pointer ${
                   instance === 'appellate'
-                    ? 'bg-violet-950/60 border-violet-600 text-violet-200 ring-1 ring-violet-500/40 shadow-sm'
-                    : 'bg-zinc-900/70 border-zinc-800 text-zinc-400 hover:bg-zinc-850 hover:text-zinc-200'
+                    ? 'bg-purple-500/20 border-[#BF5AF2] text-white ring-1 ring-[#BF5AF2]/40 shadow-sm'
+                    : 'bg-white/[0.03] border-white/[0.06] text-zinc-400 hover:bg-white/[0.07] hover:text-zinc-200'
                 }`}
               >
                 <div className="flex items-center justify-between w-full mb-1">
-                  <Scale className="w-4 h-4 text-violet-400" />
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-violet-950 border border-violet-800 text-violet-300">2-я</span>
+                  <Scale className="w-4 h-4 text-purple-400" />
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-purple-500/20 border border-purple-500/40 text-purple-300">2-я</span>
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-zinc-100">Апелляционная</div>
+                  <div className="text-xs font-semibold text-white">Апелляционная</div>
                   <div className="text-[10px] text-zinc-400 mt-0.5 leading-tight">Вторая инстанция</div>
                 </div>
               </button>
@@ -146,18 +145,18 @@ export const NewCaseModal: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleInstanceChange('supreme')}
-                className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
+                className={`p-3.5 rounded-2xl border text-left flex flex-col justify-between transition-all active:scale-[0.96] cursor-pointer ${
                   instance === 'supreme'
-                    ? 'bg-emerald-950/60 border-emerald-600 text-emerald-200 ring-1 ring-emerald-500/40 shadow-sm'
-                    : 'bg-zinc-900/70 border-zinc-800 text-zinc-400 hover:bg-zinc-850 hover:text-zinc-200'
+                    ? 'bg-emerald-500/20 border-[#30D158] text-white ring-1 ring-[#30D158]/40 shadow-sm'
+                    : 'bg-white/[0.03] border-white/[0.06] text-zinc-400 hover:bg-white/[0.07] hover:text-zinc-200'
                 }`}
               >
                 <div className="flex items-center justify-between w-full mb-1">
-                  <Crown className="w-4 h-4 text-emerald-400" />
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-950 border border-emerald-800 text-emerald-300">3-я</span>
+                  <Crown className="w-4 h-4 text-[#30D158]" />
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-300">3-я</span>
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-zinc-100">Верховная инстанция</div>
+                  <div className="text-xs font-semibold text-white">Верховная инстанция</div>
                   <div className="text-[10px] text-zinc-400 mt-0.5 leading-tight">Последняя инстанция</div>
                 </div>
               </button>
@@ -167,7 +166,7 @@ export const NewCaseModal: React.FC = () => {
           {/* Title */}
           <div>
             <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
-              Наименование спора / Номер дела <span className="text-rose-400">*</span>
+              Наименование спора / Номер дела <span className="text-[#FF453A]">*</span>
             </label>
             <input
               type="text"
@@ -175,7 +174,7 @@ export const NewCaseModal: React.FC = () => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="напр. ОКР-10940/2024 (ООО «Альфа» к ПАО «Север»)"
-              className="w-full bg-zinc-900 border border-zinc-800 focus:border-emerald-500 text-zinc-100 px-3.5 py-2.5 rounded-xl text-xs outline-none transition-colors"
+              className="w-full bg-black/40 border border-white/[0.08] focus:border-[#0A84FF] focus:ring-2 focus:ring-[#0A84FF]/20 text-white px-3.5 py-2.5 rounded-2xl text-xs outline-none transition-all"
             />
           </div>
 
@@ -190,7 +189,7 @@ export const NewCaseModal: React.FC = () => {
                 value={courtName}
                 onChange={(e) => setCourtName(e.target.value)}
                 placeholder="напр. Окружной суд"
-                className="w-full bg-zinc-900 border border-zinc-800 focus:border-emerald-500 text-zinc-100 px-3 py-2 rounded-xl text-xs outline-none transition-colors"
+                className="w-full bg-black/40 border border-white/[0.08] focus:border-[#0A84FF] text-white px-3.5 py-2 rounded-xl text-xs outline-none transition-all"
               />
             </div>
             <div>
@@ -202,7 +201,7 @@ export const NewCaseModal: React.FC = () => {
                 value={caseNumber}
                 onChange={(e) => setCaseNumber(e.target.value)}
                 placeholder="напр. ОКР-10940/2024"
-                className="w-full bg-zinc-900 border border-zinc-800 focus:border-emerald-500 text-zinc-100 px-3 py-2 rounded-xl text-xs outline-none transition-colors"
+                className="w-full bg-black/40 border border-white/[0.08] focus:border-[#0A84FF] text-white px-3.5 py-2 rounded-xl text-xs outline-none transition-all"
               />
             </div>
           </div>
@@ -218,7 +217,7 @@ export const NewCaseModal: React.FC = () => {
                 value={judge}
                 onChange={(e) => setJudge(e.target.value)}
                 placeholder="напр. Судья Смирнов А.В."
-                className="w-full bg-zinc-900 border border-zinc-800 focus:border-emerald-500 text-zinc-100 px-3 py-2 rounded-xl text-xs outline-none transition-colors"
+                className="w-full bg-black/40 border border-white/[0.08] focus:border-[#0A84FF] text-white px-3.5 py-2 rounded-xl text-xs outline-none transition-all"
               />
             </div>
             <div>
@@ -228,7 +227,7 @@ export const NewCaseModal: React.FC = () => {
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as CaseStatus)}
-                className="w-full bg-zinc-900 border border-zinc-800 focus:border-emerald-500 text-zinc-200 px-3 py-2 rounded-xl text-xs outline-none transition-colors"
+                className="w-full bg-[#1c1c1e] border border-white/[0.08] focus:border-[#0A84FF] text-white px-3 py-2 rounded-xl text-xs outline-none transition-all"
               >
                 <option value="in_progress">В производстве (Рассмотрение)</option>
                 <option value="won">Удовлетворено / В нашу пользу</option>
@@ -250,14 +249,14 @@ export const NewCaseModal: React.FC = () => {
                   key={tmpl.id}
                   type="button"
                   onClick={() => setTemplateId(tmpl.id)}
-                  className={`p-2.5 rounded-xl border text-left transition-colors cursor-pointer ${
+                  className={`p-3 rounded-2xl border text-left transition-all active:scale-[0.96] cursor-pointer ${
                     templateId === tmpl.id
-                      ? 'bg-zinc-850 border-emerald-500 text-zinc-100 ring-1 ring-emerald-500/30'
-                      : 'bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:bg-zinc-850 hover:text-zinc-200'
+                      ? 'bg-white/[0.1] border-[#0A84FF] text-white ring-1 ring-[#0A84FF]/30'
+                      : 'bg-white/[0.03] border-white/[0.06] text-zinc-400 hover:bg-white/[0.07] hover:text-zinc-200'
                   }`}
                 >
-                  <div className="text-xs font-semibold truncate">{tmpl.name}</div>
-                  <div className="text-[10px] text-zinc-500 truncate mt-0.5">{tmpl.category}</div>
+                  <div className="text-xs font-semibold truncate text-white">{tmpl.name}</div>
+                  <div className="text-[10px] text-zinc-400 truncate mt-0.5">{tmpl.category}</div>
                 </button>
               ))}
             </div>
@@ -273,22 +272,22 @@ export const NewCaseModal: React.FC = () => {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Существо иска, цена спора, ключевые риски..."
               rows={2}
-              className="w-full bg-zinc-900 border border-zinc-800 focus:border-emerald-500 text-zinc-100 p-2.5 rounded-xl text-xs outline-none resize-none transition-colors"
+              className="w-full bg-black/40 border border-white/[0.08] focus:border-[#0A84FF] text-white p-2.5 rounded-2xl text-xs outline-none resize-none transition-all"
             />
           </div>
 
           {/* Footer Submit */}
-          <div className="pt-3 border-t border-zinc-850 flex items-center justify-end gap-2">
+          <div className="pt-3 border-t border-white/[0.06] flex items-center justify-end gap-2.5">
             <button
               type="button"
               onClick={() => setNewCaseOpen(false)}
-              className="px-4 py-2 text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 rounded-xl transition-colors cursor-pointer"
+              className="px-4 py-2 text-xs font-medium text-zinc-300 hover:text-white bg-white/[0.06] hover:bg-white/[0.12] rounded-xl transition-all active:scale-[0.95] cursor-pointer"
             >
               Отмена
             </button>
             <button
               type="submit"
-              className="flex items-center gap-1.5 px-5 py-2 text-xs font-semibold text-zinc-950 bg-emerald-400 hover:bg-emerald-300 rounded-xl shadow-md transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-5 py-2 text-xs font-semibold apple-emerald-btn rounded-xl transition-all active:scale-[0.95] cursor-pointer"
             >
               <Sparkles className="w-4 h-4" />
               <span>Создать производство</span>

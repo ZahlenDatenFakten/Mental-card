@@ -1,15 +1,14 @@
 import React, { useEffect } from 'react';
 import { AlertTriangle, AlertCircle, Info, X } from 'lucide-react';
 import { useMindMapStore } from '../../store/useMindMapStore';
-import { Kbd } from './Kbd';
 
 export const ConfirmDialog: React.FC = () => {
   const { confirmDialog, closeConfirmDialog } = useMindMapStore();
 
   useEffect(() => {
-    if (!confirmDialog.isOpen) return;
-
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (!confirmDialog.isOpen) return;
+
       if (e.key === 'Escape') {
         e.preventDefault();
         confirmDialog.onCancel?.();
@@ -27,99 +26,92 @@ export const ConfirmDialog: React.FC = () => {
 
   if (!confirmDialog.isOpen) return null;
 
-  const getVariantStyles = () => {
+  const getVariantIcon = () => {
     switch (confirmDialog.variant) {
       case 'danger':
-        return {
-          icon: <AlertCircle className="w-6 h-6 text-rose-400" />,
-          btn: 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-950/50',
-          iconBg: 'bg-rose-950/60 border-rose-800/80',
-        };
+        return <AlertTriangle className="w-5 h-5 text-[#FF453A]" />;
       case 'warning':
-        return {
-          icon: <AlertTriangle className="w-6 h-6 text-amber-400" />,
-          btn: 'bg-amber-600 hover:bg-amber-500 text-zinc-950 font-semibold shadow-amber-950/50',
-          iconBg: 'bg-amber-950/60 border-amber-800/80',
-        };
+        return <AlertCircle className="w-5 h-5 text-[#FF9F0A]" />;
       default:
-        return {
-          icon: <Info className="w-6 h-6 text-emerald-400" />,
-          btn: 'bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold shadow-emerald-950/50',
-          iconBg: 'bg-emerald-950/60 border-emerald-800/80',
-        };
+        return <Info className="w-5 h-5 text-[#0A84FF]" />;
     }
   };
 
-  const styles = getVariantStyles();
-
-  const handleConfirm = () => {
-    confirmDialog.onConfirm();
-    closeConfirmDialog();
-  };
-
-  const handleCancel = () => {
-    confirmDialog.onCancel?.();
-    closeConfirmDialog();
+  const getConfirmButtonClass = () => {
+    switch (confirmDialog.variant) {
+      case 'danger':
+        return 'bg-[#FF453A] hover:bg-[#ff5b52] text-white shadow-sm border border-[#FF453A]';
+      case 'warning':
+        return 'bg-[#FF9F0A] hover:bg-[#ffaa2b] text-black font-semibold shadow-sm border border-[#FF9F0A]';
+      default:
+        return 'apple-primary-btn';
+    }
   };
 
   return (
     <div
-      onClick={handleCancel}
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+      onClick={() => {
+        confirmDialog.onCancel?.();
+        closeConfirmDialog();
+      }}
+      className="fixed inset-0 z-[100] bg-black/65 backdrop-blur-xl flex items-center justify-center p-4 animate-apple-fade-in"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-2xl shadow-floating overflow-hidden animate-scale-in flex flex-col text-zinc-100"
+        className="w-full max-w-md apple-glass-card rounded-3xl shadow-apple-modal border border-white/[0.12] p-6 animate-apple-scale-in text-zinc-100 flex flex-col"
       >
         {/* Header with Icon */}
-        <div className="p-6 pb-4 flex items-start gap-4">
-          <div className={`p-3 rounded-xl border flex-shrink-0 ${styles.iconBg}`}>
-            {styles.icon}
-          </div>
-
-          <div className="flex-1 min-w-0 pr-2">
-            <h3 className="text-base font-semibold text-zinc-100 leading-snug">
-              {confirmDialog.title}
-            </h3>
-            <p className="text-xs text-zinc-400 mt-1.5 leading-relaxed">
-              {confirmDialog.message}
-            </p>
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-white/[0.06] border border-white/[0.08] shadow-sm">
+              {getVariantIcon()}
+            </div>
+            <div>
+              <h3 className="text-[15px] font-semibold text-white tracking-tight">
+                {confirmDialog.title}
+              </h3>
+            </div>
           </div>
 
           <button
-            onClick={handleCancel}
-            className="p-1 text-zinc-500 hover:text-zinc-300 rounded transition-colors cursor-pointer"
+            onClick={() => {
+              confirmDialog.onCancel?.();
+              closeConfirmDialog();
+            }}
+            className="p-1.5 text-zinc-400 hover:text-white hover:bg-white/[0.08] rounded-xl transition-all active:scale-[0.92] cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Action Buttons */}
-        <div className="px-6 py-4 border-t border-zinc-850 bg-zinc-900/40 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-[11px] text-zinc-500">
-            <span className="flex items-center gap-1">
-              <Kbd>Enter</Kbd> Подтвердить
-            </span>
-            <span className="flex items-center gap-1">
-              <Kbd>Esc</Kbd> Отмена
-            </span>
-          </div>
+        {/* Message */}
+        <p className="text-xs text-zinc-300 leading-relaxed font-sans mb-6">
+          {confirmDialog.message}
+        </p>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleCancel}
-              className="px-3.5 py-2 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl transition-colors cursor-pointer"
-            >
-              {confirmDialog.cancelLabel || 'Отмена'}
-            </button>
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-white/[0.06]">
+          <button
+            type="button"
+            onClick={() => {
+              confirmDialog.onCancel?.();
+              closeConfirmDialog();
+            }}
+            className="px-4 py-2 text-xs font-medium text-zinc-300 hover:text-white bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] rounded-xl transition-all active:scale-[0.95] cursor-pointer"
+          >
+            {confirmDialog.cancelLabel || 'Отмена'}
+          </button>
 
-            <button
-              onClick={handleConfirm}
-              className={`px-4 py-2 text-xs font-semibold rounded-xl shadow-md transition-all cursor-pointer ${styles.btn}`}
-            >
-              {confirmDialog.confirmLabel || 'Подтвердить'}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              confirmDialog.onConfirm();
+              closeConfirmDialog();
+            }}
+            className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all active:scale-[0.95] cursor-pointer ${getConfirmButtonClass()}`}
+          >
+            {confirmDialog.confirmLabel || 'Подтвердить'}
+          </button>
         </div>
       </div>
     </div>

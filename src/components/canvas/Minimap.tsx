@@ -16,8 +16,8 @@ export const Minimap: React.FC<MinimapProps> = ({ layout, transform, onNavigate 
   const padding = 40;
 
   // Minimap dimensions
-  const minimapWidth = 180;
-  const minimapHeight = 120;
+  const minimapWidth = 190;
+  const minimapHeight = 125;
 
   const totalTreeWidth = Math.max(200, boundingBox.width + padding * 2);
   const totalTreeHeight = Math.max(150, boundingBox.height + padding * 2);
@@ -52,11 +52,9 @@ export const Minimap: React.FC<MinimapProps> = ({ layout, transform, onNavigate 
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
 
-    // Convert click in minimap to tree coordinates
     const treeX = clickX / scaleFactor - offsetX;
     const treeY = clickY / scaleFactor - offsetY;
 
-    // Calculate canvas transform to center on this tree coordinate
     const targetTransformX = containerWidth / 2 - treeX * transform.scale;
     const targetTransformY = containerHeight / 2 - treeY * transform.scale;
 
@@ -68,9 +66,9 @@ export const Minimap: React.FC<MinimapProps> = ({ layout, transform, onNavigate 
       <button
         onClick={() => setIsVisible(true)}
         title="Показать миникарту"
-        className="fixed bottom-5 right-5 z-40 p-2 bg-zinc-900/90 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800 rounded-lg shadow-lg backdrop-blur transition-all"
+        className="fixed bottom-5 right-5 z-40 p-2.5 apple-glass text-zinc-300 hover:text-white rounded-2xl shadow-apple-hud transition-all active:scale-[0.9] cursor-pointer"
       >
-        <MapPin className="w-4 h-4" />
+        <MapPin className="w-4 h-4 text-[#0A84FF]" />
       </button>
     );
   }
@@ -78,16 +76,16 @@ export const Minimap: React.FC<MinimapProps> = ({ layout, transform, onNavigate 
   const nodesList: LayoutNode[] = Array.from(nodeMap.values());
 
   return (
-    <div className="fixed bottom-5 right-5 z-40 bg-zinc-950/95 border border-zinc-800/90 rounded-xl shadow-floating overflow-hidden backdrop-blur-md transition-all">
+    <div className="fixed bottom-5 right-5 z-40 apple-glass-card rounded-2xl shadow-apple-hud border border-white/[0.12] overflow-hidden transition-all">
       {/* Header */}
-      <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-zinc-850 bg-zinc-900/50 text-[11px] text-zinc-400 select-none">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/[0.06] bg-white/[0.02] text-[11px] text-zinc-300 select-none">
         <span className="flex items-center gap-1.5 font-medium">
-          <MapPin className="w-3 h-3 text-emerald-400" />
-          Миникарта
+          <MapPin className="w-3 h-3 text-[#0A84FF]" />
+          Обзор карты
         </span>
         <button
           onClick={() => setIsVisible(false)}
-          className="text-zinc-500 hover:text-zinc-300 p-0.5 rounded transition-colors"
+          className="text-zinc-400 hover:text-white p-0.5 rounded-md transition-colors cursor-pointer"
           title="Скрыть миникарту"
         >
           <EyeOff className="w-3 h-3" />
@@ -98,7 +96,7 @@ export const Minimap: React.FC<MinimapProps> = ({ layout, transform, onNavigate 
       <div
         ref={minimapRef}
         onClick={handleClick}
-        className="relative cursor-crosshair bg-zinc-950/90"
+        className="relative cursor-crosshair bg-black/40"
         style={{
           width: `${minimapWidth}px`,
           height: `${minimapHeight}px`,
@@ -114,14 +112,14 @@ export const Minimap: React.FC<MinimapProps> = ({ layout, transform, onNavigate 
           return (
             <div
               key={n.id}
-              className="absolute rounded-[1px]"
+              className="absolute rounded-[1.5px]"
               style={{
                 left: `${miniX}px`,
                 top: `${miniY}px`,
                 width: `${miniW}px`,
                 height: `${miniH}px`,
-                backgroundColor: n.color || (n.isRoot ? '#10b981' : '#52525b'),
-                opacity: n.isRoot ? 0.9 : 0.6,
+                backgroundColor: n.color || (n.isRoot ? '#0A84FF' : '#8E8E93'),
+                opacity: n.isRoot ? 0.95 : 0.65,
               }}
             />
           );
@@ -129,7 +127,7 @@ export const Minimap: React.FC<MinimapProps> = ({ layout, transform, onNavigate 
 
         {/* Viewport Boundary Rectangle */}
         <div
-          className="absolute border border-emerald-500/80 bg-emerald-500/10 pointer-events-none rounded-[2px] transition-all duration-75"
+          className="absolute border border-[#0A84FF] bg-[#0A84FF]/15 pointer-events-none rounded-[3px] shadow-sm transition-all duration-75"
           style={{
             left: `${miniViewX}px`,
             top: `${miniViewY}px`,
