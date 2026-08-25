@@ -192,10 +192,52 @@ export const NodeDetailsPanel: React.FC = () => {
 
             {/* Law Article / Norm & Citation */}
             <div className="p-3.5 apple-inset-group space-y-2.5">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-[#64D2FF]">
-                <BookOpen className="w-3.5 h-3.5" />
-                <span>Норма права и закон</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#64D2FF]">
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>Норма права и закон</span>
+                </div>
+
+                <button
+                  onClick={() => useMindMapStore.setState({ isLawArticleOpen: true })}
+                  className="text-[11px] text-[#0A84FF] hover:underline font-medium cursor-pointer"
+                >
+                  База статей →
+                </button>
               </div>
+
+              {/* Quick Suggestion Pills */}
+              <div className="flex items-center gap-1 flex-wrap pt-0.5">
+                {[
+                  { tag: 'ст. 309 ГК', full: 'ст. 309 ГК РФ', title: 'Надлежащее исполнение обязательств', cit: 'Обязательства должны исполняться надлежащим образом в соответствии с условиями обязательства и требованиями закона.' },
+                  { tag: 'ст. 310 ГК', full: 'ст. 310 ГК РФ', title: 'Недопустимость одностороннего отказа', cit: 'Односторонний отказ от исполнения обязательства и одностороннее изменение его условий не допускаются.' },
+                  { tag: 'ст. 395 ГК', full: 'ст. 395 ГК РФ', title: 'Проценты за пользование чужими средствами', cit: 'В случаях неправомерного удержания денежных средств, уклонения от их возврата подлежат уплате проценты на сумму долга.' },
+                  { tag: 'ст. 506 ГК', full: 'ст. 506 ГК РФ', title: 'Договор поставки', cit: 'Поставщик обязуется передать в обусловленный срок производимые или закупаемые им товары покупателю.' },
+                  { tag: 'ст. 65 АПК', full: 'ст. 65 АПК РФ', title: 'Обязанность доказывания', cit: 'Каждое лицо, участвующее в деле, должно доказать обстоятельства, на которые оно ссылается.' },
+                  { tag: 'ст. 71 АПК', full: 'ст. 71 АПК РФ', title: 'Оценка доказательств судом', cit: 'Арбитражный суд оценивает доказательства по своему внутреннему убеждению, основанному на всестороннем исследовании.' },
+                  { tag: 'ст. 270 АПК', full: 'ст. 270 АПК РФ', title: 'Основания отмены в апелляции', cit: 'Основаниями для изменения или отмены решения суда первой инстанции являются неполное выяснение обстоятельств дела.' },
+                  { tag: 'Пленум ВС №7', full: 'Пленум ВС РФ № 7', title: 'Ответственность за нарушение обязательств', cit: 'Должник обязан возместить кредитору убытки, причиненные неисполнением обязательства.' },
+                ].map((sug, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      if (selectedId) {
+                        updateNode(selectedId, {
+                          lawArticle: sug.full,
+                          citation: sug.cit,
+                          nodeType: 'norm',
+                          notes: currentNode.notes ? `${currentNode.notes}\n\n${sug.title}` : sug.title,
+                        });
+                      }
+                    }}
+                    title={`${sug.full}: ${sug.title}`}
+                    className="px-2 py-0.5 rounded-lg bg-[#0A84FF]/10 hover:bg-[#0A84FF]/25 border border-[#0A84FF]/30 text-[10.5px] font-mono text-[#64D2FF] transition-all cursor-pointer active:scale-[0.95]"
+                  >
+                    + {sug.tag}
+                  </button>
+                ))}
+              </div>
+
               <div>
                 <label className="block text-[10.5px] text-[#8E8E93] mb-1">
                   Статья закона / Пленум ВС РФ

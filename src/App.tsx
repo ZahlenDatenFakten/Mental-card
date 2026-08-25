@@ -13,11 +13,12 @@ import { ShareModal } from './components/panels/ShareModal';
 import { TemplatesModal } from './components/panels/TemplatesModal';
 import { CasePortfolioModal } from './components/panels/CasePortfolioModal';
 import { NewCaseModal } from './components/panels/NewCaseModal';
+import { LawArticleModal } from './components/panels/LawArticleModal';
 import { ToastContainer } from './components/ui/ToastContainer';
 import { ConfirmDialog } from './components/ui/ConfirmDialog';
 
 export const App: React.FC = () => {
-  const { currentView } = useMindMapStore();
+  const { currentView, isLawArticleOpen, setLawArticleOpen } = useMindMapStore();
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-black font-sans text-[#F5F5F7] flex flex-col antialiased">
@@ -56,6 +57,12 @@ export const App: React.FC = () => {
 
       {/* Case Templates Gallery Modal */}
       <TemplatesModal />
+
+      {/* Smart Law Articles Database Modal */}
+      <LawArticleModal
+        isOpen={isLawArticleOpen}
+        onClose={() => setLawArticleOpen(false)}
+      />
 
       {/* Case Portfolio Registry Modal */}
       <CasePortfolioModal />

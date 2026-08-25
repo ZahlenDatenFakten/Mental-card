@@ -18,6 +18,7 @@ import {
   Crown,
   Check,
   ArrowLeft,
+  BookOpen,
 } from 'lucide-react';
 import { useMindMapStore } from '../../store/useMindMapStore';
 import { Kbd } from '../ui/Kbd';
@@ -46,6 +47,7 @@ export const TopNavigation: React.FC = () => {
     setCourtDocOpen,
     setShareOpen,
     setNewCaseOpen,
+    setLawArticleOpen,
     filterNodeType,
     setFilterNodeType,
   } = useMindMapStore();
@@ -224,6 +226,16 @@ export const TopNavigation: React.FC = () => {
         >
           <FileText className="w-3.5 h-3.5" />
           <span>Позиция для суда</span>
+        </button>
+
+        {/* Smart Law Articles Database Button */}
+        <button
+          onClick={() => setLawArticleOpen(true)}
+          className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-[#64D2FF] hover:text-white bg-[#0A84FF]/15 hover:bg-[#0A84FF]/25 border border-[#0A84FF]/30 rounded-lg transition-all active:scale-[0.96] cursor-pointer"
+          title="Открыть базу статей и законов (ГК РФ, АПК РФ, Пленумы ВС РФ)"
+        >
+          <BookOpen className="w-3.5 h-3.5" />
+          <span>Нормы (ст.)</span>
         </button>
 
         <div className="w-[1px] h-4 bg-white/[0.15] mx-0.5" />

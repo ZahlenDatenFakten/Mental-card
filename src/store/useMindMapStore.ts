@@ -51,6 +51,7 @@ interface MindMapState {
   isTemplatesOpen: boolean;
   isPortfolioOpen: boolean;
   isNewCaseOpen: boolean;
+  isLawArticleOpen: boolean;
 
   // Dialog & Toast State
   toasts: ToastMessage[];
@@ -119,6 +120,7 @@ interface MindMapState {
   setTemplatesOpen: (open: boolean) => void;
   setPortfolioOpen: (open: boolean) => void;
   setNewCaseOpen: (open: boolean) => void;
+  setLawArticleOpen: (open: boolean) => void;
 }
 
 // Generate unique id
@@ -292,6 +294,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
   isTemplatesOpen: false,
   isPortfolioOpen: false,
   isNewCaseOpen: false,
+  isLawArticleOpen: false,
 
   toasts: [],
   confirmDialog: {
@@ -443,16 +446,33 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
 
   deleteCase: (caseId) => {
     const { cases, activeCaseId } = get();
-    if (cases.length <= 1) {
+    const filtered = cases.filter((c) => c.id !== caseId);
+
+    if (filtered.length === 0) {
+      const emptyRoot: MindNode = {
+        id: 'root-empty',
+        title: 'Новое судебное дело',
+        nodeType: 'remedy',
+        children: [],
+      };
+      saveCasesToStorage([], '');
+      set({
+        cases: [],
+        activeCaseId: '',
+        root: emptyRoot,
+        selectedId: null,
+        history: [emptyRoot],
+        historyIndex: 0,
+        currentView: 'portfolio',
+      });
       get().addToast({
-        type: 'warning',
-        title: 'Нельзя удалить последнее дело',
-        message: 'В портфеле должно оставаться как минимум одно дело.',
+        type: 'info',
+        title: 'Все дела удалены',
+        message: 'Портфель очищен. Вы можете создать новое производство.',
       });
       return;
     }
 
-    const filtered = cases.filter((c) => c.id !== caseId);
     const newActiveId = activeCaseId === caseId ? filtered[0].id : activeCaseId;
     const newActiveCase = filtered.find((c) => c.id === newActiveId) || filtered[0];
 
@@ -888,4 +908,5 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
   setTemplatesOpen: (isTemplatesOpen) => set({ isTemplatesOpen }),
   setPortfolioOpen: (isPortfolioOpen) => set({ isPortfolioOpen }),
   setNewCaseOpen: (isNewCaseOpen) => set({ isNewCaseOpen }),
+  setLawArticleOpen: (isLawArticleOpen) => set({ isLawArticleOpen }),
 }));

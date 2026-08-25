@@ -279,7 +279,7 @@ export const ProjectsHub: React.FC = () => {
                 onPromote={handlePromote}
                 onDuplicate={(id) => duplicateCase(id)}
                 onDelete={handleDelete}
-                canDelete={cases.length > 1}
+                canDelete={true}
               />
             ))}
           </div>
